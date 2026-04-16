@@ -109,12 +109,22 @@ export function extractTitle(content: string, fallback: string): string {
   return firstLine?.slice(0, 60) || fallback;
 }
 
-// Extract snippet for preview
+// Extract snippet — prefers 深度分析 > 摘要 > first meaningful line
 export function extractSnippet(content: string, maxLen = 120): string {
+  const analysisM = content.match(/\*\*深度分析\*\*\s*\n+(.+)/);
+  if (analysisM) {
+    const t = analysisM[1].trim();
+    return t.length > maxLen ? t.slice(0, maxLen) + '…' : t;
+  }
+  const summaryM = content.match(/\*\*摘要\*\*[：:]\s*(.+)/);
+  if (summaryM) {
+    const t = summaryM[1].trim();
+    return t.length > maxLen ? t.slice(0, maxLen) + '…' : t;
+  }
   const lines = content.split('\n');
   for (const line of lines) {
     const t = line.trim();
-    if (t && !t.startsWith('#') && !t.startsWith('>') && !t.startsWith('---') && t.length > 10) {
+    if (t && !t.startsWith('#') && !t.startsWith('>') && !t.startsWith('---') && !t.startsWith('**') && t.length > 10) {
       return t.length > maxLen ? t.slice(0, maxLen) + '…' : t;
     }
   }
@@ -124,4 +134,65 @@ export function extractSnippet(content: string, maxLen = 120): string {
 // Count ## sections = entry count for references files
 export function countEntries(content: string): number {
   return (content.match(/^##\s/gm) || []).length;
+}
+
+// Count entries that have deep analysis (豐富化率)
+export function countEnrichedEntries(content: string): number {
+  return (content.match(/\*\*深度分析\*\*/g) || []).length
+    + (content.match(/\*\*摘要\*\*[：:]/g) || []).length;
+}
+
+// ── References entry structured parsing ──────────────────────────────────────
+
+export interface ReferenceEntry {
+  title: string;
+  date: string;
+  url: string;
+  purpose: string;
+  analysis: string;
+  usage: string;
+  contentAngle: string;
+  imageNotes: string;
+  sourceCred: string;
+  rawSummary: string;  // fallback for old-format entries
+  isStale: boolean;
+}
+
+function _extractSection(block: string, label: string): string {
+  const re = new RegExp(`\\*\\*${label}\\*\\*\\s*\\n+([\\s\\S]+?)(?=\\n\\*\\*|\\n---\\s*$|$)`);
+  const m = block.match(re);
+  return m ? m[1].trim() : '';
+}
+
+export function parseReferenceEntries(content: string): ReferenceEntry[] {
+  const blocks = content.split(/\n---\n/);
+  const entries: ReferenceEntry[] = [];
+  for (const block of blocks) {
+    const trimmed = block.trim();
+    const titleM = trimmed.match(/^## (.+?) \((.+?)\)/m);
+    if (!titleM) continue;
+    const rawTitle = titleM[1].trim();
+    const date = titleM[2].trim();
+    const isStale = rawTitle.startsWith('⏰');
+    const title = rawTitle.replace(/^⏰\s*/, '');
+    const urlM = trimmed.match(/🔗 (https?:\/\/\S+)/);
+    const url = urlM ? urlM[1].trim() : '';
+    const purposeM = trimmed.match(/\*\*用途標籤\*\*[：:]\s*(.+)/);
+    const sourceCredM = trimmed.match(/\*\*來源可信度\*\*[：:]\s*(.+)/);
+    const summaryM = trimmed.match(/\*\*摘要\*\*[：:]\s*(.+)/);
+    entries.push({
+      title,
+      date,
+      url,
+      purpose:      purposeM ? purposeM[1].trim() : '',
+      analysis:     _extractSection(trimmed, '深度分析'),
+      usage:        _extractSection(trimmed, '應用場景'),
+      contentAngle: _extractSection(trimmed, '素材轉化角度'),
+      imageNotes:   _extractSection(trimmed, '圖片重點'),
+      sourceCred:   sourceCredM ? sourceCredM[1].trim() : '',
+      rawSummary:   summaryM ? summaryM[1].trim() : '',
+      isStale,
+    });
+  }
+  return entries;
 }
