@@ -32,6 +32,7 @@
 | `operations` | `knowledge/operations/` | 操作 SOP |
 | `decisions` | `knowledge/decisions/` | 架構決策記錄 |
 | `references` | `knowledge/references/` | LINE 群組同步參考文件 |
+| `analyses` | `knowledge/analyses/` | 八維學習分析筆記（URL/YT 分析結果）|
 
 ## 核心規則
 
@@ -68,3 +69,4 @@
 | 2026-04-15 | 初始建立：Next.js 15 + App Router + GitHub API 讀取，首頁/分類頁/文章頁路由 | ✅ 上線 |
 | 2026-04-15 | 修復：移除 Server Component 中的 onMouseEnter/onMouseLeave event handler（改用 CSS）| ✅ 已部署 |
 | 2026-04-15 | 修復：URL 從 tzlth-knowledge.vercel.app → tzlth-knowledge-base.vercel.app | ✅ 已部署 |
+| 2026-04-27 | 新增「學習分析」第 5 個分類（analyses/ → /analyses 路由）；tzlth-hq 的 analyses/index.md 改名 README.md 自動排除；驗證通過 | ✅ 已部署 |
