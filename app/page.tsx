@@ -36,7 +36,7 @@ export default async function HomePage() {
           color: 'var(--accent)',
         }}>
           <span>📄</span>
-          <span>共 {totalFiles} 份文件 · 4 個分類</span>
+          <span>共 {totalFiles} 份文件 · 5 個分類</span>
         </div>
       </div>
 

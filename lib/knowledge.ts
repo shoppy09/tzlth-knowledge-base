@@ -44,6 +44,11 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     icon: '📖',
     description: '從 LINE 群組同步的知識，涵蓋 AI 工具、社群行銷、職涯顧問等',
   },
+  analyses: {
+    label: '學習分析',
+    icon: '🔍',
+    description: '從外部內容（Threads / YouTube / 文章）萃取的八維學習分析筆記',
+  },
 };
 
 async function fetchDir(path: string): Promise<{ name: string; path: string; type: string }[]> {
@@ -69,7 +74,7 @@ async function fetchRaw(path: string): Promise<string> {
 }
 
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
-  const keys = ['methodology', 'operations', 'decisions', 'references'];
+  const keys = ['methodology', 'operations', 'decisions', 'references', 'analyses'];
   return Promise.all(
     keys.map(async (key) => {
       const def = CATEGORY_DEFS[key];
