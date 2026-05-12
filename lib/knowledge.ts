@@ -37,7 +37,7 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
   decisions: {
     label: '決策記錄',
     icon: '📋',
-    description: '重要架構決策、技術選型理由',
+    description: '重要架構決策、技術選型理由（RCF 治理文件已過濾）',
   },
   references: {
     label: '參考文件',
@@ -48,6 +48,16 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     label: '學習分析',
     icon: '🔍',
     description: '從外部內容（Threads / YouTube / 文章）萃取的八維學習分析筆記',
+  },
+  cases: {
+    label: '客戶案例',
+    icon: '🗂️',
+    description: '去識別化客戶案例，涵蓋履歷改寫、面試準備、轉職輔導等實戰紀錄',
+  },
+  product: {
+    label: '產品知識庫',
+    icon: '📦',
+    description: '課程設計、工作坊規格、產品規劃與服務材料',
   },
 };
 
@@ -74,13 +84,20 @@ async function fetchRaw(path: string): Promise<string> {
 }
 
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
-  const keys = ['methodology', 'operations', 'decisions', 'references', 'analyses'];
+  const keys = ['methodology', 'operations', 'decisions', 'references', 'analyses', 'cases', 'product'];
   return Promise.all(
     keys.map(async (key) => {
       const def = CATEGORY_DEFS[key];
       const items = await fetchDir(`knowledge/${key}`).catch(() => []);
       const files: KnowledgeFile[] = items
-        .filter((i) => i.type === 'file' && i.name.endsWith('.md') && i.name !== 'README.md')
+        .filter((i) => {
+          if (!i.type || i.type !== 'file') return false;
+          if (!i.name.endsWith('.md')) return false;
+          if (i.name === 'README.md') return false;
+          // decisions: 過濾 RCF 治理文件（RCF-XXX.md），只顯示真實決策記錄
+          if (key === 'decisions' && i.name.startsWith('RCF-')) return false;
+          return true;
+        })
         .map((i) => ({
           slug: i.name.replace(/\.md$/, ''),
           name: i.name.replace(/\.md$/, '').replace(/-/g, ' '),
