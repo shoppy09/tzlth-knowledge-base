@@ -111,7 +111,14 @@ export async function getAllCategories(): Promise<KnowledgeCategory[]> {
 export async function getCategoryFiles(category: string): Promise<KnowledgeFile[]> {
   const items = await fetchDir(`knowledge/${category}`).catch(() => []);
   return items
-    .filter((i) => i.type === 'file' && i.name.endsWith('.md') && i.name !== 'README.md')
+    .filter((i) => {
+      if (!i.type || i.type !== 'file') return false;
+      if (!i.name.endsWith('.md')) return false;
+      if (i.name === 'README.md') return false;
+      // decisions: 過濾 RCF 治理文件（RCF-XXX.md），只顯示真實決策記錄
+      if (category === 'decisions' && i.name.startsWith('RCF-')) return false;
+      return true;
+    })
     .map((i) => ({
       slug: i.name.replace(/\.md$/, ''),
       name: i.name.replace(/\.md$/, ''),
