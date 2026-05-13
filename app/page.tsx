@@ -1,4 +1,5 @@
 import { getAllCategories } from '@/lib/knowledge';
+import SearchBar from '@/app/components/SearchBar';
 
 export const revalidate = 300;
 
@@ -6,11 +7,22 @@ export default async function HomePage() {
   const categories = await getAllCategories();
   const totalFiles = categories.reduce((s, c) => s + c.files.length, 0);
 
+  // Flatten all files for search
+  const searchFiles = categories.flatMap((cat) =>
+    cat.files.map((f) => ({
+      slug: f.slug,
+      name: f.name,
+      categoryKey: cat.key,
+      categoryLabel: cat.label,
+      categoryIcon: cat.icon,
+    }))
+  );
+
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '3rem 1.5rem' }}>
 
       {/* Hero */}
-      <div style={{ marginBottom: '3rem' }}>
+      <div style={{ marginBottom: '2rem' }}>
         <h1 style={{
           fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
           fontWeight: 700,
@@ -39,6 +51,9 @@ export default async function HomePage() {
           <span>共 {totalFiles} 份文件 · {categories.length} 個分類</span>
         </div>
       </div>
+
+      {/* Search */}
+      <SearchBar files={searchFiles} />
 
       {/* Category Grid */}
       <div style={{

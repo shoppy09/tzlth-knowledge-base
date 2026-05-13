@@ -150,9 +150,10 @@ function ReferenceCard({ entry }: { entry: ReferenceEntry }) {
 export default async function ArticlePage({
   params,
 }: {
-  params: Promise<{ category: string; slug: string }>;
+  params: Promise<{ category: string; slug: string[] }>;
 }) {
-  const { category, slug } = await params;
+  const { category, slug: slugParts } = await params;
+  const slug = slugParts.join('/');
   const def = CATEGORY_DEFS[category];
   if (!def) notFound();
 

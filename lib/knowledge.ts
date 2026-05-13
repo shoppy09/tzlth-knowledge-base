@@ -71,6 +71,28 @@ async function fetchDir(path: string): Promise<{ name: string; path: string; typ
   return Array.isArray(data) ? data : [];
 }
 
+// Recursively fetch all .md files within a directory (for product/ subdirectories)
+async function fetchDirRecursive(path: string): Promise<{ name: string; path: string; type: string }[]> {
+  const items = await fetchDir(path);
+  const results: { name: string; path: string; type: string }[] = [];
+  const subdirPromises: Promise<{ name: string; path: string; type: string }[]>[] = [];
+
+  for (const item of items) {
+    if (item.type === 'file') {
+      results.push(item);
+    } else if (item.type === 'dir') {
+      subdirPromises.push(fetchDirRecursive(item.path));
+    }
+  }
+
+  const subdirResults = await Promise.all(subdirPromises);
+  for (const subFiles of subdirResults) {
+    results.push(...subFiles);
+  }
+
+  return results;
+}
+
 async function fetchRaw(path: string): Promise<string> {
   const res = await fetch(`${BASE}/${path}`, {
     headers: {
@@ -83,12 +105,33 @@ async function fetchRaw(path: string): Promise<string> {
   return res.text();
 }
 
+// Build a display-friendly slug from the full repo path
+// e.g. "knowledge/product/c5-interview-mastery/teaching-materials/worksheet-a.md"
+//   → "c5-interview-mastery/teaching-materials/worksheet-a"
+function buildSlug(filePath: string, category: string): string {
+  const prefix = `knowledge/${category}/`;
+  const relative = filePath.startsWith(prefix) ? filePath.slice(prefix.length) : filePath;
+  return relative.replace(/\.md$/, '');
+}
+
+// Build a display name from the slug
+// e.g. "c5-interview-mastery/teaching-materials/worksheet-a" → "c5-interview-mastery › worksheet-a"
+function buildDisplayName(slug: string): string {
+  const parts = slug.split('/');
+  if (parts.length <= 1) return slug;
+  // Show: top-folder › filename
+  return `${parts[0]} › ${parts[parts.length - 1]}`;
+}
+
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
   const keys = ['methodology', 'operations', 'decisions', 'references', 'analyses', 'cases', 'product'];
   return Promise.all(
     keys.map(async (key) => {
       const def = CATEGORY_DEFS[key];
-      const items = await fetchDir(`knowledge/${key}`).catch(() => []);
+      // product/ uses recursive fetch to capture subdirectory files
+      const items = key === 'product'
+        ? await fetchDirRecursive(`knowledge/${key}`).catch(() => [])
+        : await fetchDir(`knowledge/${key}`).catch(() => []);
       const files: KnowledgeFile[] = items
         .filter((i) => {
           if (!i.type || i.type !== 'file') return false;
@@ -98,18 +141,24 @@ export async function getAllCategories(): Promise<KnowledgeCategory[]> {
           if (key === 'decisions' && i.name.startsWith('RCF-')) return false;
           return true;
         })
-        .map((i) => ({
-          slug: i.name.replace(/\.md$/, ''),
-          name: i.name.replace(/\.md$/, '').replace(/-/g, ' '),
-          path: i.path,
-        }));
+        .map((i) => {
+          const slug = buildSlug(i.path, key);
+          return {
+            slug,
+            name: key === 'product' ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
+            path: i.path,
+          };
+        });
       return { key, ...def, files };
     })
   );
 }
 
 export async function getCategoryFiles(category: string): Promise<KnowledgeFile[]> {
-  const items = await fetchDir(`knowledge/${category}`).catch(() => []);
+  // product/ uses recursive fetch to capture subdirectory files
+  const items = category === 'product'
+    ? await fetchDirRecursive(`knowledge/${category}`).catch(() => [])
+    : await fetchDir(`knowledge/${category}`).catch(() => []);
   return items
     .filter((i) => {
       if (!i.type || i.type !== 'file') return false;
@@ -119,14 +168,18 @@ export async function getCategoryFiles(category: string): Promise<KnowledgeFile[
       if (category === 'decisions' && i.name.startsWith('RCF-')) return false;
       return true;
     })
-    .map((i) => ({
-      slug: i.name.replace(/\.md$/, ''),
-      name: i.name.replace(/\.md$/, ''),
-      path: i.path,
-    }));
+    .map((i) => {
+      const slug = buildSlug(i.path, category);
+      return {
+        slug,
+        name: category === 'product' ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
+        path: i.path,
+      };
+    });
 }
 
 export async function getFileContent(category: string, slug: string): Promise<string> {
+  // slug may contain slashes for nested paths (e.g. "c5-interview-mastery/teaching-materials/worksheet-a")
   return fetchRaw(`knowledge/${category}/${slug}.md`);
 }
 
