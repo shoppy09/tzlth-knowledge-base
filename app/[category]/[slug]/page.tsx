@@ -42,7 +42,8 @@ function Section({ label, content }: { label: string; content: string }) {
 }
 
 function ReferenceCard({ entry }: { entry: ReferenceEntry }) {
-  const hasRich = entry.analysis || entry.usage || entry.contentAngle;
+  const isGarbage = !!(entry.analysis?.startsWith('根據URL推測') || entry.analysis?.startsWith('由於'));
+  const hasRich = !!(entry.analysis || entry.usage || entry.contentAngle) && !isGarbage;
 
   return (
     <div style={{
@@ -63,6 +64,7 @@ function ReferenceCard({ entry }: { entry: ReferenceEntry }) {
               color: 'var(--charcoal)',
             }}>
               {entry.isStale && <span title="可能過時" style={{ marginRight: '0.25rem' }}>⏰</span>}
+              {isGarbage && <span title="分析內容為 AI 根據 URL 推測，非真實內容，等待重新豐富化" style={{ marginRight: '0.25rem' }}>⚠️</span>}
               {entry.title}
             </span>
             <span style={{
@@ -206,7 +208,7 @@ export default async function ArticlePage({
               }}>
                 <span>共 <strong style={{ color: 'var(--charcoal)' }}>{entries.length}</strong> 條</span>
                 <span>豐富化 <strong style={{ color: 'var(--accent)' }}>
-                  {entries.filter(e => e.analysis || e.usage).length}
+                  {entries.filter(e => (e.analysis || e.usage) && !e.analysis?.startsWith('根據URL推測') && !e.analysis?.startsWith('由於')).length}
                 </strong> 條</span>
                 {entries.filter(e => e.isStale).length > 0 && (
                   <span>⏰ 待更新 {entries.filter(e => e.isStale).length} 條</span>

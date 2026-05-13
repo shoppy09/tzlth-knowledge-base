@@ -203,9 +203,13 @@ export function parseReferenceEntries(content: string): ReferenceEntry[] {
     const rawTitle = titleM[1].trim();
     const date = titleM[2].trim();
     const isStale = rawTitle.startsWith('⏰');
-    const title = rawTitle.replace(/^⏰\s*/, '');
+    const baseTitle = rawTitle.replace(/^⏰\s*/, '');
     const urlM = trimmed.match(/🔗 (https?:\/\/\S+)/);
     const url = urlM ? urlM[1].trim() : '';
+    let title = baseTitle;
+    if (baseTitle === '未標記' && url) {
+      try { title = new URL(url).hostname.replace('www.', ''); } catch { /* keep '未標記' */ }
+    }
     const purposeM = trimmed.match(/\*\*用途標籤\*\*[：:]\s*(.+)/);
     const sourceCredM = trimmed.match(/\*\*來源可信度\*\*[：:]\s*(.+)/);
     const summaryM = trimmed.match(/\*\*摘要\*\*[：:]\s*(.+)/);
