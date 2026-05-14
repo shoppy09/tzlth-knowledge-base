@@ -27,37 +27,37 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
   methodology: {
     label: '方法論',
     icon: '🧠',
-    description: '職涯顧問方法論、諮詢框架、履歷診斷邏輯',
+    description: '六大諮詢框架、P-type 分類、履歷診斷邏輯、講座產品設計規範',
   },
   operations: {
     label: '操作 SOP',
     icon: '⚙️',
-    description: '系統操作流程、週例行工作、部門跨工作流',
+    description: '知識流入管理、LINE 廣播、部署流程、諮詢 SOP 等操作手冊',
   },
   decisions: {
     label: '決策記錄',
     icon: '📋',
-    description: '重要架構決策、技術選型理由（RCF 治理文件已過濾）',
+    description: '重要架構決策與技術選型理由（RCF 治理文件已過濾）',
   },
   references: {
     label: '參考文件',
     icon: '📖',
-    description: '從 LINE 群組同步的知識，涵蓋 AI 工具、社群行銷、職涯顧問等',
+    description: '從 LINE 群組每週同步的知識庫 — AI 工具、社群行銷、職涯顧問方法論等',
   },
   analyses: {
     label: '學習分析',
     icon: '🔍',
-    description: '從外部內容（Threads / YouTube / 文章）萃取的八維學習分析筆記',
+    description: '八維深度分析筆記 — Threads、YouTube、部落格等外部學習資源萃取',
   },
   cases: {
     label: '客戶案例',
-    icon: '🗂️',
-    description: '去識別化客戶案例，涵蓋履歷改寫、面試準備、轉職輔導等實戰紀錄',
+    icon: '👤',
+    description: '去識別化諮詢案例 — P-type 標注、策略摘要、知識萃取',
   },
   product: {
     label: '產品知識庫',
     icon: '📦',
-    description: '課程設計、工作坊規格、產品規劃與服務材料',
+    description: '工作坊 W1-W5、社大課程 C1-C5、診斷包 D1 的課程設計與教材',
   },
 };
 
@@ -115,12 +115,29 @@ function buildSlug(filePath: string, category: string): string {
 }
 
 // Build a display name from the slug
-// e.g. "c5-interview-mastery/teaching-materials/worksheet-a" → "c5-interview-mastery › worksheet-a"
+// e.g. "c5-interview-mastery/teaching-materials/worksheet-a" → "C5 面試通關 › worksheet-a"
 function buildDisplayName(slug: string): string {
   const parts = slug.split('/');
   if (parts.length <= 1) return slug;
-  // Show: top-folder › filename
-  return `${parts[0]} › ${parts[parts.length - 1]}`;
+
+  // Friendly top-folder names for known product codes
+  const folderLabels: Record<string, string> = {
+    'w1-resume-workshop': 'W1 履歷工作坊',
+    'w2-career-exploration': 'W2 職涯探索',
+    'w3-enterprise-workshop': 'W3 企業版',
+    'w4-manager-workshop': 'W4 主管引導版',
+    'w5-military-transition': 'W5 軍職換跑道',
+    'w6-resume-interview-workshop': 'W6 履歷×面試',
+    'c1-second-career': 'C1 第二人生',
+    'c2-resume-workshop': 'C2 履歷撰寫',
+    'c3-career-checkup': 'C3 職涯健檢',
+    'c4-slash-career': 'C4 斜槓起步',
+    'c5-interview-mastery': 'C5 面試通關',
+  };
+
+  const topFolder = folderLabels[parts[0]] || parts[0];
+  const fileName = parts[parts.length - 1];
+  return `${topFolder} › ${fileName}`;
 }
 
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
@@ -181,6 +198,33 @@ export async function getCategoryFiles(category: string): Promise<KnowledgeFile[
 export async function getFileContent(category: string, slug: string): Promise<string> {
   // slug may contain slashes for nested paths (e.g. "c5-interview-mastery/teaching-materials/worksheet-a")
   return fetchRaw(`knowledge/${category}/${slug}.md`);
+}
+
+// Fetch the last modified date for a file via GitHub Commits API
+export async function getFileLastModified(category: string, slug: string): Promise<string | null> {
+  try {
+    const filePath = `knowledge/${category}/${slug}.md`;
+    const res = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/commits?path=${encodeURIComponent(filePath)}&per_page=1`,
+      {
+        headers,
+        next: { revalidate: 3600 }, // Cache for 1 hour (less frequent updates)
+      } as RequestInit,
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      const dateStr = data[0].commit?.committer?.date || data[0].commit?.author?.date;
+      if (dateStr) {
+        return new Date(dateStr).toLocaleDateString('zh-TW', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+        });
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // Extract first H1 or first meaningful line as title

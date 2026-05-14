@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
+import ErrorBoundary from "@/app/components/ErrorBoundary";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "知識庫 | 職涯停看聽",
   description: "職涯停看聽內部知識庫 — 方法論、操作 SOP、決策記錄、參考文件",
+  openGraph: {
+    title: '知識庫 | 職涯停看聽',
+    description: '職涯停看聽內部知識庫 — 方法論、操作 SOP、決策記錄、參考文件',
+    type: 'website',
+    siteName: '職涯停看聽',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -47,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </span>
             </a>
             <a
-              href="https://hq-dashboard.vercel.app"
+              href="https://dashboard.careerssl.com"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -65,7 +72,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
 
         <main style={{ minHeight: 'calc(100vh - 56px)' }}>
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
 
         <footer style={{

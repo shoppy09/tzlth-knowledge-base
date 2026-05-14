@@ -7,7 +7,7 @@
   --charcoal-soft: #3A3A37;
   --accent: #C4622D;
   --accent-light: #E8A882;
-  --muted: #8A8780;
+  --muted: #706C65;
   --border: #D8D3C8;
   --white: #FDFCF9;
 }
@@ -156,4 +156,95 @@ body {
   border: none;
   padding: 0;
   color: inherit;
+}
+
+/* ── Table styles (overflow handling) ── */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0 1rem;
+  font-size: 0.875rem;
+}
+.prose thead th {
+  background: var(--cream);
+  font-weight: 600;
+  color: var(--charcoal);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+}
+.prose tbody td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.prose tbody tr:hover {
+  background: rgba(196, 98, 45, 0.02);
+}
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.75rem 0 1rem;
+}
+
+/* ── Mobile sidebar toggle ── */
+.mobile-sidebar-toggle {
+  display: none;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--charcoal-soft);
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 1023px) {
+  .mobile-sidebar-toggle {
+    display: block !important;
+  }
+  /* Hide desktop sidebar on mobile */
+  aside {
+    display: none !important;
+  }
+}
+
+/* ── TOC styles ── */
+.toc-container {
+  margin-bottom: 1.5rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+.toc-container summary {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.toc-container ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.25rem;
+  list-style: none;
+}
+.toc-container li {
+  margin-bottom: 0.25rem;
+}
+.toc-container a {
+  font-size: 0.8125rem;
+  color: var(--charcoal-soft);
+  text-decoration: none;
+  transition: color 0.1s;
+}
+.toc-container a:hover {
+  color: var(--accent);
+}
+.toc-container .toc-h3 {
+  padding-left: 1rem;
 }

@@ -21,22 +21,27 @@ export default function SearchBar({ files }: Props) {
     const q = query.trim().toLowerCase();
     if (!q || q.length < 2) return [];
     const terms = q.split(/\s+/);
-    return files.filter((f) => {
+    const allMatches = files.filter((f) => {
       const haystack = `${f.name} ${f.slug} ${f.categoryLabel}`.toLowerCase();
       return terms.every((t) => haystack.includes(t));
-    }).slice(0, 20);
+    });
+    return allMatches;
   }, [query, files]);
+
+  const displayResults = useMemo(() => results.slice(0, 20), [results]);
+  const totalCount = results.length;
+  const isLimited = totalCount > 20;
 
   // Group results by category
   const grouped = useMemo(() => {
     const map = new Map<string, SearchFile[]>();
-    for (const r of results) {
+    for (const r of displayResults) {
       const existing = map.get(r.categoryKey) || [];
       existing.push(r);
       map.set(r.categoryKey, existing);
     }
     return map;
-  }, [results]);
+  }, [displayResults]);
 
   const showResults = query.trim().length >= 2;
 
@@ -87,11 +92,11 @@ export default function SearchBar({ files }: Props) {
           border: '1px solid var(--border)',
           borderRadius: 8,
           boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-          maxHeight: 400,
+          maxHeight: 'min(400px, 60vh)',
           overflowY: 'auto',
           zIndex: 100,
         }}>
-          {results.length === 0 ? (
+          {displayResults.length === 0 ? (
             <div style={{
               padding: '1rem 1.25rem',
               color: 'var(--muted)',
@@ -142,9 +147,11 @@ export default function SearchBar({ files }: Props) {
             fontSize: '0.75rem',
             color: 'var(--muted)',
             textAlign: 'right',
-            borderTop: results.length > 0 ? 'none' : undefined,
+            borderTop: displayResults.length > 0 ? 'none' : undefined,
           }}>
-            {results.length} 筆結果
+            {isLimited
+              ? `顯示前 20 筆（共 ${totalCount} 筆符合）`
+              : `${totalCount} 筆結果`}
           </div>
         </div>
       )}

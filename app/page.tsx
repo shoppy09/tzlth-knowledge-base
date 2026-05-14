@@ -95,9 +95,40 @@ export default async function HomePage() {
         ))}
       </div>
 
-      {/* Sync info */}
+      {/* Usage guide */}
       <div style={{
         marginTop: '3rem',
+        padding: '1.25rem 1.5rem',
+        background: 'var(--white)',
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+      }}>
+        <div style={{
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          color: 'var(--charcoal)',
+          marginBottom: '0.75rem',
+        }}>
+          💡 如何使用知識庫
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '0.75rem',
+          fontSize: '0.8125rem',
+          color: 'var(--muted)',
+          lineHeight: 1.6,
+        }}>
+          <div><strong style={{ color: 'var(--charcoal-soft)' }}>🔍 搜尋</strong><br/>上方搜尋列可跨分類搜尋檔案名稱</div>
+          <div><strong style={{ color: 'var(--charcoal-soft)' }}>🧠 方法論</strong><br/>諮詢前查閱框架與診斷邏輯</div>
+          <div><strong style={{ color: 'var(--charcoal-soft)' }}>📖 參考文件</strong><br/>LINE 群組同步的外部知識，含 AI 分析</div>
+          <div><strong style={{ color: 'var(--charcoal-soft)' }}>📦 產品知識庫</strong><br/>工作坊與課程的完整設計文件</div>
+        </div>
+      </div>
+
+      {/* Sync info */}
+      <div style={{
+        marginTop: '1rem',
         padding: '1rem 1.25rem',
         background: 'var(--white)',
         border: '1px solid var(--border)',
@@ -107,6 +138,7 @@ export default async function HomePage() {
         gap: '0.75rem',
         fontSize: '0.8125rem',
         color: 'var(--muted)',
+        flexWrap: 'wrap',
       }}>
         <span>🔄</span>
         <span>
