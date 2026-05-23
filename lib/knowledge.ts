@@ -59,6 +59,11 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     icon: '📦',
     description: '工作坊 W1-W5、社大課程 C1-C5、診斷包 D1 的課程設計與教材',
   },
+  automations: {
+    label: '自動化工具',
+    icon: '🤖',
+    description: 'A-01~A-21 全站自動化工具登錄冊 — GitHub Actions、Vercel Cron、GAS、Claude Code Hooks、Northflank Cron',
+  },
 };
 
 async function fetchDir(path: string): Promise<{ name: string; path: string; type: string }[]> {
@@ -141,7 +146,7 @@ function buildDisplayName(slug: string): string {
 }
 
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
-  const keys = ['methodology', 'operations', 'decisions', 'references', 'analyses', 'cases', 'product'];
+  const keys = ['methodology', 'operations', 'automations', 'decisions', 'references', 'analyses', 'cases', 'product'];
   return Promise.all(
     keys.map(async (key) => {
       const def = CATEGORY_DEFS[key];
