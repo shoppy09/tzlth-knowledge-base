@@ -4,11 +4,11 @@
 職涯停看聽知識庫的對外網站。將 tzlth-hq GitHub repo 中 `/knowledge/` 資料夾的 Markdown 文件渲染成可瀏覽的知識庫網站，供 Tim 隨時查閱。
 
 ## 系統資訊
-- **URL**：https://tzlth-knowledge-base.vercel.app
+- **URL**：https://knowledge.careerssl.com
 - **GitHub repo**：shoppy09/tzlth-knowledge-base
 - **本地路徑**：C:\Users\USER\Desktop\CLAUDE寫工具\knowledge-base
 - **部署平台**：Vercel（手動 `npx vercel --prod`，無自動部署）
-- **狀態**：上線中（live，驗證於 2026-04-15）
+- **狀態**：上線中（live，驗證於 2026-05-23）
 
 ## 技術架構
 - **框架**：Next.js 15（App Router）
@@ -30,9 +30,12 @@
 |---------|----------------|------|
 | `methodology` | `knowledge/methodology/` | 顧問方法論 |
 | `operations` | `knowledge/operations/` | 操作 SOP |
-| `decisions` | `knowledge/decisions/` | 架構決策記錄 |
+| `automations` | `knowledge/automations/` | 自動化流程記錄 |
+| `decisions` | `knowledge/decisions/` | 架構決策記錄（ADR + RCF）|
 | `references` | `knowledge/references/` | LINE 群組同步參考文件 |
 | `analyses` | `knowledge/analyses/` | 八維學習分析筆記（URL/YT 分析結果）|
+| `cases` | `knowledge/cases/` | 諮詢案例洞察（去識別化）|
+| `product` | `knowledge/product/` | 產品架構、定價、話術 |
 
 ## 核心規則
 
@@ -70,3 +73,5 @@
 | 2026-04-15 | 修復：移除 Server Component 中的 onMouseEnter/onMouseLeave event handler（改用 CSS）| ✅ 已部署 |
 | 2026-04-15 | 修復：URL 從 tzlth-knowledge.vercel.app → tzlth-knowledge-base.vercel.app | ✅ 已部署 |
 | 2026-04-27 | 新增「學習分析」第 5 個分類（analyses/ → /analyses 路由）；tzlth-hq 的 analyses/index.md 改名 README.md 自動排除；驗證通過 | ✅ 已部署 |
+| 2026-05-29 | 更新 URL → knowledge.careerssl.com；補入 3 個分類（automations/cases/product）；驗證日期修正至 2026-05-23 | ✅ |
+| 2026-05-29 | CSP 修復：style-src 補入 https://fonts.googleapis.com；新增 font-src https://fonts.gstatic.com（DM Sans 未渲染 bug 修復）| ✅ |
