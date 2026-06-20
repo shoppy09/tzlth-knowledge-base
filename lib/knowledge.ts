@@ -49,6 +49,11 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     icon: '🔍',
     description: '八維深度分析筆記 — Threads、YouTube、部落格等外部學習資源萃取',
   },
+  syntheses: {
+    label: '知識編譯',
+    icon: '🧩',
+    description: '深度跨分析合成 — 從學習分析選取群集全文跨篇整合，萃取單篇看不到的新洞察（知識編譯 SKILL 產出）',
+  },
   cases: {
     label: '客戶案例',
     icon: '👤',
@@ -146,7 +151,7 @@ function buildDisplayName(slug: string): string {
 }
 
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
-  const keys = ['methodology', 'operations', 'automations', 'decisions', 'references', 'analyses', 'cases', 'product'];
+  const keys = ['methodology', 'operations', 'automations', 'decisions', 'references', 'analyses', 'syntheses', 'cases', 'product'];
   return Promise.all(
     keys.map(async (key) => {
       const def = CATEGORY_DEFS[key];
