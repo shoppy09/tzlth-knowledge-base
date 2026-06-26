@@ -46,6 +46,8 @@ export function middleware(req: NextRequest) {
 
   return new NextResponse('需要登入', {
     status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="職涯停看聽知識庫", charset="UTF-8"' },
+    // ⚠️ realm 必須 ASCII（HTTP header 值不可含非 Latin-1 字元，中文會被丟棄→瀏覽器不跳登入框）
+    // charset="UTF-8" 提示瀏覽器以 UTF-8 送帳密（支援非 ASCII 密碼）
+    headers: { 'WWW-Authenticate': 'Basic realm="Knowledge Base", charset="UTF-8"' },
   });
 }
