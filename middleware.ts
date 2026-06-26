@@ -32,8 +32,10 @@ export function middleware(req: NextRequest) {
   if (authHeader) {
     const [scheme, encoded] = authHeader.split(' ');
     if (scheme === 'Basic' && encoded) {
-      const decoded = atob(encoded);
-      const sep = decoded.indexOf(':');
+      // UTF-8 安全解碼：atob 得位元組，再經 TextDecoder 還原 UTF-8（支援中文等非 ASCII 密碼）
+      const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
+      const decoded = new TextDecoder().decode(bytes);
+      const sep = decoded.indexOf(':'); // 帳號不含冒號、密碼可含 → 取首個冒號分隔
       const user = decoded.slice(0, sep);
       const pass = decoded.slice(sep + 1);
       if (user === expectedUser && pass === expectedPass) {
