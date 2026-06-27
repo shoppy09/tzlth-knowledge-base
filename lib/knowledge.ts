@@ -37,7 +37,12 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
   decisions: {
     label: '決策記錄',
     icon: '📋',
-    description: '重要架構決策與技術選型理由（RCF 治理文件已過濾）',
+    description: '重要架構決策與技術選型理由（ADR + RCF 規格層變更紀錄「為什麼這樣改」）',
+  },
+  domains: {
+    label: '知識領域掃描',
+    icon: '🌐',
+    description: 'D1-D6 主動知識掃描 findings — 台灣職場趨勢、職涯方法論、課程設計、競品動態、課程事實更新、AI 工具設定',
   },
   references: {
     label: '參考文件',
@@ -143,6 +148,12 @@ function buildDisplayName(slug: string): string {
     'c3-career-checkup': 'C3 職涯健檢',
     'c4-slash-career': 'C4 斜槓起步',
     'c5-interview-mastery': 'C5 面試通關',
+    'D1-taiwan-workplace-trends': 'D1 台灣職場趨勢',
+    'D2-career-coaching-methodology': 'D2 職涯顧問方法論',
+    'D3-course-design': 'D3 課程設計',
+    'D4-competitor-dynamics': 'D4 競品動態',
+    'D5-course-content-update': 'D5 課程內容事實',
+    'D6-tool-setup': 'D6 工具設定最佳實踐',
   };
 
   const topFolder = folderLabels[parts[0]] || parts[0];
@@ -151,28 +162,30 @@ function buildDisplayName(slug: string): string {
 }
 
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
-  const keys = ['methodology', 'operations', 'automations', 'decisions', 'references', 'analyses', 'syntheses', 'cases', 'product'];
+  const keys = ['methodology', 'operations', 'automations', 'decisions', 'domains', 'references', 'analyses', 'syntheses', 'cases', 'product'];
+  // 巢狀資料夾（含子目錄 .md）需 recursive fetch
+  const nested = (k: string) => k === 'product' || k === 'domains';
   return Promise.all(
     keys.map(async (key) => {
       const def = CATEGORY_DEFS[key];
-      // product/ uses recursive fetch to capture subdirectory files
-      const items = key === 'product'
+      const items = nested(key)
         ? await fetchDirRecursive(`knowledge/${key}`).catch(() => [])
         : await fetchDir(`knowledge/${key}`).catch(() => []);
       const files: KnowledgeFile[] = items
         .filter((i) => {
           if (!i.type || i.type !== 'file') return false;
           if (!i.name.endsWith('.md')) return false;
-          if (i.name === 'README.md') return false;
-          // decisions: 過濾 RCF 治理文件（RCF-XXX.md），只顯示真實決策記錄
-          if (key === 'decisions' && i.name.startsWith('RCF-')) return false;
+          // domains 破例保留 README（D1-D6 領域導覽 + 掃描紀錄索引）；其餘分類過濾 README
+          if (i.name === 'README.md' && key !== 'domains') return false;
+          // decisions: 只排除 RCF 範本，其餘 RCF 規格層變更紀錄顯示（內部站，2026-06-27）
+          if (key === 'decisions' && i.name === 'RCF-000-template.md') return false;
           return true;
         })
         .map((i) => {
           const slug = buildSlug(i.path, key);
           return {
             slug,
-            name: key === 'product' ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
+            name: nested(key) ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
             path: i.path,
           };
         });
@@ -182,24 +195,26 @@ export async function getAllCategories(): Promise<KnowledgeCategory[]> {
 }
 
 export async function getCategoryFiles(category: string): Promise<KnowledgeFile[]> {
-  // product/ uses recursive fetch to capture subdirectory files
-  const items = category === 'product'
+  // 巢狀資料夾（product/ domains/）需 recursive fetch 捕捉子目錄 .md
+  const nested = category === 'product' || category === 'domains';
+  const items = nested
     ? await fetchDirRecursive(`knowledge/${category}`).catch(() => [])
     : await fetchDir(`knowledge/${category}`).catch(() => []);
   return items
     .filter((i) => {
       if (!i.type || i.type !== 'file') return false;
       if (!i.name.endsWith('.md')) return false;
-      if (i.name === 'README.md') return false;
-      // decisions: 過濾 RCF 治理文件（RCF-XXX.md），只顯示真實決策記錄
-      if (category === 'decisions' && i.name.startsWith('RCF-')) return false;
+      // domains 破例保留 README（領域導覽 + 掃描紀錄索引）；其餘分類過濾 README
+      if (i.name === 'README.md' && category !== 'domains') return false;
+      // decisions: 只排除 RCF 範本，其餘 RCF 規格層變更紀錄顯示（內部站，2026-06-27）
+      if (category === 'decisions' && i.name === 'RCF-000-template.md') return false;
       return true;
     })
     .map((i) => {
       const slug = buildSlug(i.path, category);
       return {
         slug,
-        name: category === 'product' ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
+        name: nested ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
         path: i.path,
       };
     });
