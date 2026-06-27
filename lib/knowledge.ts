@@ -74,7 +74,25 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     icon: '🤖',
     description: 'A-01~A-21 全站自動化工具登錄冊 — GitHub Actions、Vercel Cron、GAS、Claude Code Hooks、Northflank Cron',
   },
+  overview: {
+    label: '核心參考',
+    icon: '📌',
+    description: 'knowledge/ 根層精選參考檔 — 客戶洞察 Pattern、課程資訊時效、洞察↔方法論地圖等諮詢/內容創作高頻參考',
+  },
 };
+
+// overview 分類＝knowledge/ 根層精選 .md（curated allowlist；新增高值根檔須在此加入）
+const ROOT_ALLOWLIST = [
+  'client-patterns.md',
+  'course-info-freshness.md',
+  'pattern-methodology-map.md',
+  // 中值（如需顯示，取消註解）：'architecture.md', 'synthesis-report.md', 'classification-matrix.md',
+];
+
+// 組 repo 內檔案路徑：overview 為根層檔（無 category 子目錄），其餘為 knowledge/<category>/<slug>
+function repoPath(category: string, slug: string): string {
+  return category === 'overview' ? `knowledge/${slug}.md` : `knowledge/${category}/${slug}.md`;
+}
 
 async function fetchDir(path: string): Promise<{ name: string; path: string; type: string }[]> {
   const res = await fetch(`${BASE}/${path}`, {
@@ -124,6 +142,10 @@ async function fetchRaw(path: string): Promise<string> {
 // e.g. "knowledge/product/c5-interview-mastery/teaching-materials/worksheet-a.md"
 //   → "c5-interview-mastery/teaching-materials/worksheet-a"
 function buildSlug(filePath: string, category: string): string {
+  // overview 為根層檔（path = knowledge/<file>.md）→ slug = 檔名（無子目錄）
+  if (category === 'overview') {
+    return filePath.replace(/^knowledge\//, '').replace(/\.md$/, '');
+  }
   const prefix = `knowledge/${category}/`;
   const relative = filePath.startsWith(prefix) ? filePath.slice(prefix.length) : filePath;
   return relative.replace(/\.md$/, '');
@@ -132,6 +154,17 @@ function buildSlug(filePath: string, category: string): string {
 // Build a display name from the slug
 // e.g. "c5-interview-mastery/teaching-materials/worksheet-a" → "C5 面試通關 › worksheet-a"
 function buildDisplayName(slug: string): string {
+  // overview 根層檔友善標籤（單層 slug = 檔名）
+  const rootLabels: Record<string, string> = {
+    'client-patterns': '客戶洞察 Pattern（去識別化）',
+    'course-info-freshness': '課程資訊時效追蹤表',
+    'pattern-methodology-map': '客戶洞察 ↔ 方法論地圖',
+    'architecture': '知識庫架構圖',
+    'synthesis-report': '知識庫合成報告',
+    'classification-matrix': '知識資產類別矩陣',
+  };
+  if (rootLabels[slug]) return rootLabels[slug];
+
   const parts = slug.split('/');
   if (parts.length <= 1) return slug;
 
@@ -162,19 +195,24 @@ function buildDisplayName(slug: string): string {
 }
 
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
-  const keys = ['methodology', 'operations', 'automations', 'decisions', 'domains', 'references', 'analyses', 'syntheses', 'cases', 'product'];
+  const keys = ['overview', 'methodology', 'operations', 'automations', 'decisions', 'domains', 'references', 'analyses', 'syntheses', 'cases', 'product'];
   // 巢狀資料夾（含子目錄 .md）需 recursive fetch
   const nested = (k: string) => k === 'product' || k === 'domains';
   return Promise.all(
     keys.map(async (key) => {
       const def = CATEGORY_DEFS[key];
-      const items = nested(key)
+      // overview＝knowledge/ 根層 fetch（非 knowledge/overview）；巢狀走 recursive；其餘走子目錄
+      const items = key === 'overview'
+        ? await fetchDir('knowledge').catch(() => [])
+        : nested(key)
         ? await fetchDirRecursive(`knowledge/${key}`).catch(() => [])
         : await fetchDir(`knowledge/${key}`).catch(() => []);
       const files: KnowledgeFile[] = items
         .filter((i) => {
           if (!i.type || i.type !== 'file') return false;
           if (!i.name.endsWith('.md')) return false;
+          // overview：只收 allowlist 精選根檔
+          if (key === 'overview') return ROOT_ALLOWLIST.includes(i.name);
           // domains 破例保留 README（D1-D6 領域導覽 + 掃描紀錄索引）；其餘分類過濾 README
           if (i.name === 'README.md' && key !== 'domains') return false;
           // decisions: 只排除 RCF 範本，其餘 RCF 規格層變更紀錄顯示（內部站，2026-06-27）
@@ -185,7 +223,7 @@ export async function getAllCategories(): Promise<KnowledgeCategory[]> {
           const slug = buildSlug(i.path, key);
           return {
             slug,
-            name: nested(key) ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
+            name: (nested(key) || key === 'overview') ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
             path: i.path,
           };
         });
@@ -197,13 +235,17 @@ export async function getAllCategories(): Promise<KnowledgeCategory[]> {
 export async function getCategoryFiles(category: string): Promise<KnowledgeFile[]> {
   // 巢狀資料夾（product/ domains/）需 recursive fetch 捕捉子目錄 .md
   const nested = category === 'product' || category === 'domains';
-  const items = nested
+  const items = category === 'overview'
+    ? await fetchDir('knowledge').catch(() => [])
+    : nested
     ? await fetchDirRecursive(`knowledge/${category}`).catch(() => [])
     : await fetchDir(`knowledge/${category}`).catch(() => []);
   return items
     .filter((i) => {
       if (!i.type || i.type !== 'file') return false;
       if (!i.name.endsWith('.md')) return false;
+      // overview：只收 allowlist 精選根檔
+      if (category === 'overview') return ROOT_ALLOWLIST.includes(i.name);
       // domains 破例保留 README（領域導覽 + 掃描紀錄索引）；其餘分類過濾 README
       if (i.name === 'README.md' && category !== 'domains') return false;
       // decisions: 只排除 RCF 範本，其餘 RCF 規格層變更紀錄顯示（內部站，2026-06-27）
@@ -214,7 +256,7 @@ export async function getCategoryFiles(category: string): Promise<KnowledgeFile[
       const slug = buildSlug(i.path, category);
       return {
         slug,
-        name: nested ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
+        name: (nested || category === 'overview') ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
         path: i.path,
       };
     });
@@ -222,13 +264,14 @@ export async function getCategoryFiles(category: string): Promise<KnowledgeFile[
 
 export async function getFileContent(category: string, slug: string): Promise<string> {
   // slug may contain slashes for nested paths (e.g. "c5-interview-mastery/teaching-materials/worksheet-a")
-  return fetchRaw(`knowledge/${category}/${slug}.md`);
+  // overview 為根層檔（repoPath 處理 knowledge/<slug>.md）
+  return fetchRaw(repoPath(category, slug));
 }
 
 // Fetch the last modified date for a file via GitHub Commits API
 export async function getFileLastModified(category: string, slug: string): Promise<string | null> {
   try {
-    const filePath = `knowledge/${category}/${slug}.md`;
+    const filePath = repoPath(category, slug); // overview 根層檔特判（修前輪漏點）
     const res = await fetch(
       `https://api.github.com/repos/${OWNER}/${REPO}/commits?path=${encodeURIComponent(filePath)}&per_page=1`,
       {
