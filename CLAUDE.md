@@ -75,3 +75,5 @@
 | 2026-04-27 | 新增「學習分析」第 5 個分類（analyses/ → /analyses 路由）；tzlth-hq 的 analyses/index.md 改名 README.md 自動排除；驗證通過 | ✅ 已部署 |
 | 2026-05-29 | 更新 URL → knowledge.careerssl.com；補入 3 個分類（automations/cases/product）；驗證日期修正至 2026-05-23 | ✅ |
 | 2026-05-29 | CSP 修復：style-src 補入 https://fonts.googleapis.com；新增 font-src https://fonts.gstatic.com（DM Sans 未渲染 bug 修復）| ✅ |
+| 2026-06-27 | Basic Auth middleware 上線（noindex 公開站 → noindex + Basic Auth 內部站）：HTTP Basic Auth（fail-closed）+ UTF-8 解碼 + WWW-Authenticate realm ASCII | ✅ |
+| 2026-06-27 | 顯示範圍擴充（lib/knowledge.ts，內部站連動）：① decisions 移除 RCF-XXX 全濾改僅排除 RCF-000-template（RCF 規格層變更紀錄可見，decisions 4→114 份）② 新增 domains 分類（D1-D6 findings，recursive fetch + README 破例顯示領域導覽/掃描紀錄 + buildDisplayName D1-D6 labels，35 份）③ brand-benchmarks 不渲染（6 分析已透過 analyses/ 1:1 副本可見，避重複）。Chrome MCP live 驗證 114+35 + 巢狀路由 + Basic Auth 完整。deploy-verify SYS-08-2026-06-27-display-scope.md（在 tzlth-hq）| ✅ |
