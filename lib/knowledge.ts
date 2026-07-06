@@ -86,7 +86,10 @@ const ROOT_ALLOWLIST = [
   'client-patterns.md',
   'course-info-freshness.md',
   'pattern-methodology-map.md',
-  // 中值（如需顯示，取消註解）：'architecture.md', 'synthesis-report.md', 'classification-matrix.md',
+  // 2026-07-06 批次 1B ⑤：加入中值 3 份（知識內容型）；其餘 9 份 root 檔為內部維運檔（improvements/inbox/pending-decisions/drive-inventory/gdrive-index/locations-registry/notebooklm-sync-log/ai-employee-role-brief/CLAUDE），即使 Basic Auth 亦不宜公開展示
+  'architecture.md',
+  'synthesis-report.md',
+  'classification-matrix.md',
 ];
 
 // 組 repo 內檔案路徑：overview 為根層檔（無 category 子目錄），其餘為 knowledge/<category>/<slug>
