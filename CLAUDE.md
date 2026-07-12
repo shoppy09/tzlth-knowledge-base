@@ -58,12 +58,9 @@
 - 分類頁：`revalidate = 300`
 - 文章頁：`revalidate = 300`
 
-## 收尾規定
-修改後必須：
-1. 更新本文件「最近修改記錄」
-2. 更新 `dev/tasks.md`（在 tzlth-hq）
-3. 更新 `hr/inventory.json`（在 tzlth-hq）
-4. 更新 `reports/daily-log.md`（在 tzlth-hq）
+## 收尾七件事（每次對話結束前必做）
+收尾完整規則詳見**總部 CLAUDE.md →「核心原則零：收尾七件事」**（7 步驟：git push / 最近修改記錄 / tasks.md / inventory.json / daily-log / reflection-log / 品質自查 HARD STOP / 未完成清單 HARD STOP，均對總部檔案執行；2026-07-12 規則盤點指針化，原 4 件事清單為 D6 漏網）。
+> 部署特例：build → push → `npx vercel --prod`。
 
 ## 最近修改記錄
 
