@@ -1,5 +1,6 @@
 import { getAllCategories } from '@/lib/knowledge';
 import SearchBar from '@/app/components/SearchBar';
+import AskBox from '@/app/components/AskBox';
 
 export const revalidate = 300;
 
@@ -51,6 +52,9 @@ export default async function HomePage() {
           <span>共 {totalFiles} 份文件 · {categories.length} 個分類</span>
         </div>
       </div>
+
+      {/* AI 問答框（RCF-143 工程 3，D4）*/}
+      <AskBox />
 
       {/* Search */}
       <SearchBar files={searchFiles} />
