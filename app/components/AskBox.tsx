@@ -34,9 +34,14 @@ export default function AskBox() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),
       });
-      const data = await res.json();
+      // middleware fail-closed（401/503）回純文字非 JSON → 先安全解析
+      const raw = await res.text();
+      let data: { answer?: string; sources?: Source[]; error?: string } = {};
+      try { data = JSON.parse(raw); } catch { /* 非 JSON（認證/設定層回應）*/ }
       if (!res.ok) {
-        setErr(data?.error || '查詢失敗，請稍後再試。');
+        if (res.status === 401) setErr('需要登入（Basic Auth）——請重新整理頁面登入。');
+        else if (res.status === 503) setErr(data.error || '服務尚未設定完成（請稍候或聯絡管理員）。');
+        else setErr(data.error || '查詢失敗，請稍後再試。');
       } else {
         setAnswer(data.answer || '');
         setSources(Array.isArray(data.sources) ? data.sources : []);

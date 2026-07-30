@@ -130,7 +130,18 @@ ${question}`;
   );
   if (!res.ok) throw new Error(`gemini ${res.status}`);
   const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '（生成失敗，請稍後再試）';
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (text) return text;
+  // 無 text → 判斷被擋原因，回具體訊息（非籠統「生成失敗」）
+  const blockReason = data?.promptFeedback?.blockReason;
+  const finishReason = data?.candidates?.[0]?.finishReason;
+  if (blockReason || finishReason === 'SAFETY' || finishReason === 'RECITATION') {
+    return `此問題的內容被 AI 安全過濾擋下（${blockReason || finishReason}），無法生成答案。可換個問法，或直接點下方引用來源檔案查閱。`;
+  }
+  if (finishReason === 'MAX_TOKENS') {
+    return '（答案過長被截斷，請縮小問題範圍再試）';
+  }
+  return '（生成失敗，請稍後再試）';
 }
 
 // GET /api/ask?health=1 — 唯讀健康檢查：驗 >1MB raw 索引拉取 + 計量（不呼叫 Gemini）
