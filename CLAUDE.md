@@ -11,7 +11,7 @@
 - **狀態**：上線中（live，驗證於 2026-05-23）
 
 ## 技術架構
-- **框架**：Next.js 15（App Router）
+- **框架**：Next.js 16（App Router，Turbopack）
 - **樣式**：CSS-in-JS（inline styles）+ 米色（#FAF7F2）設計風格
 - **Markdown 渲染**：`marked` 套件
 - **資料來源**：tzlth-hq GitHub repo（shoppy09/tzlth-hq）透過 GitHub API 讀取
@@ -19,9 +19,13 @@
 
 ## 路由結構
 ```
-/                    → 首頁（顯示所有分類 + 文件數量統計）
+/                    → 首頁（顯示所有分類 + 文件數量統計 + AI 問答框 AskBox）
 /[category]          → 分類頁（顯示該分類下的文件清單）
 /[category]/[file]   → 文章頁（渲染單份 Markdown 文件）
+/api/ask             → 開放圖書館 AI-query 層（RCF-143 工程 3，4-A）
+                       POST：拉 tzlth-hq data/search-index.json（raw media type）
+                       → 記憶體計分（移植 knowledge-hook.py）→ gemini-flash-latest 帶引用生成
+                       GET ?health=1：唯讀索引計量（smoke test / 監控）
 ```
 
 ## 知識庫來源資料夾對應
@@ -34,8 +38,13 @@
 | `decisions` | `knowledge/decisions/` | 架構決策記錄（ADR + RCF）|
 | `references` | `knowledge/references/` | LINE 群組同步參考文件 |
 | `analyses` | `knowledge/analyses/` | 八維學習分析筆記（URL/YT 分析結果）|
-| `cases` | `knowledge/cases/` | 諮詢案例洞察（去識別化）|
+| `cases` | `knowledge/cases/` | 諮詢案例洞察（去識別化，含 `cases/reports/` 全文層）|
 | `product` | `knowledge/product/` | 產品架構、定價、話術 |
+| `syntheses` | `knowledge/syntheses/` | 知識編譯（深度跨分析合成）|
+| `overview` | `knowledge/`（根層 allowlist）| 核心參考（client-patterns / freshness / architecture 等精選根檔）|
+
+> ⚠️ 分類實為 **11 類**（lib/knowledge.ts `getAllCategories` keys）：overview / methodology / operations / automations / decisions / domains / references / analyses / syntheses / cases / product（domains/product 遞迴子目錄）。
+> **/api/ask 語料範圍 ≠ 本渲染分類**：AI-query 只檢索 **5 夾研究語料**（analyses / references / domains / syntheses / cases，RCF-143 C 館），刻意不含 methodology（→ NotebookLM A 館）/ product / operations / decisions。
 
 ## 核心規則
 
@@ -50,7 +59,8 @@
 - hover 效果必須用 CSS class，不用 inline style + event handler
 
 ### 環境變數
-- `GITHUB_TOKEN`：Personal Access Token，必須有 `repo:read` 權限
+- `GITHUB_TOKEN`：Personal Access Token（Fine-Grained，Contents:Read），讀 tzlth-hq `knowledge/` + `data/search-index.json`（raw media type 支援 >1MB）
+- `GEMINI_API_KEY`：Google AI Studio 免費層 key（RCF-143 D2，/api/ask 生成層）。⚠️ **免費層會用輸入訓練 Google 模型**——送出語料為去識別化 5 夾研究語料（無 LEG-1 PII，Tim 接受 IP 訓練權衡，見 security-log 2026-07-30）
 - 設定位置：Vercel 環境變數（Production + Preview + Development）
 
 ## revalidate 設定
@@ -66,6 +76,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-07-30 | **RCF-143 工程 3：`/api/ask` 開放圖書館 AI-query 層（4-A 輕量 RAG）**：新增 `app/api/ask/route.ts`（POST 拉 tzlth-hq `data/search-index.json` raw media type + 記憶體計分〔移植 knowledge-hook.py 中文 2/3-gram + SYNONYMS + references 降權 0.35〕→ gemini-flash-latest 帶引用生成〔強制接地/不杜撰/A 館邊界揭露/prompt-injection 隔離〕；GET ?health 唯讀計量）+ `app/components/AskBox.tsx`（D4 首頁問答框，client component）+ page.tsx 插入。D1=B/D2 免費層/D3 Hobby+Fluid maxDuration=60/D4 首頁框。commit db3acf5 → vercel --prod ● Ready。**GET health 生產驗證 ✅**（>1MB raw 實抓 / 5 夾 160 檔 1215 塊 / Basic Auth）；順修 Next15→16 + 8→11 分類 stale。⏳ POST 生成待 Tim 設 GEMINI_API_KEY → 補驗改 live。deploy-verify SYS-08-2026-07-30（tzlth-hq）| ⚠️ deployed_unverified（POST 待 key）|
 | 2026-04-15 | 初始建立：Next.js 15 + App Router + GitHub API 讀取，首頁/分類頁/文章頁路由 | ✅ 上線 |
 | 2026-04-15 | 修復：移除 Server Component 中的 onMouseEnter/onMouseLeave event handler（改用 CSS）| ✅ 已部署 |
 | 2026-04-15 | 修復：URL 從 tzlth-knowledge.vercel.app → tzlth-knowledge-base.vercel.app | ✅ 已部署 |
