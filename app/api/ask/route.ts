@@ -167,20 +167,27 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!TOKEN || !GEMINI_KEY) {
+  let question = '';
+  let mode = 'answer'; // 'answer'（預設，web AskBox：檢索+Gemini 生成）｜'search'（SYS-10 LINE：只回片段，由呼叫端自行生成）
+  try {
+    const body = await req.json();
+    question = (body?.question || '').toString().trim();
+    if (body?.mode === 'search') mode = 'search';
+  } catch {
+    return NextResponse.json({ error: '請求格式錯誤' }, { status: 400 });
+  }
+
+  // 憑證守衛：search 模式不呼叫 Gemini（RCF-139 補記六，架構 Y），故只需 GITHUB_TOKEN；answer 模式兩者皆需。
+  if (!TOKEN) {
+    return NextResponse.json({ error: '服務未設定完成（GITHUB_TOKEN）' }, { status: 503 });
+  }
+  if (mode === 'answer' && !GEMINI_KEY) {
     return NextResponse.json(
       { error: '服務未設定完成（GITHUB_TOKEN / GEMINI_API_KEY）' },
       { status: 503 },
     );
   }
 
-  let question = '';
-  try {
-    const body = await req.json();
-    question = (body?.question || '').toString().trim();
-  } catch {
-    return NextResponse.json({ error: '請求格式錯誤' }, { status: 400 });
-  }
   if (!question || question.length < 2) {
     return NextResponse.json({ error: '請輸入問題' }, { status: 400 });
   }
@@ -190,6 +197,7 @@ export async function POST(req: NextRequest) {
     const chunks = await loadIndex();
     const keywords = extractKeywords(question);
     if (keywords.length === 0) {
+      if (mode === 'search') return NextResponse.json({ mode: 'search', chunks: [], sources: [] });
       return NextResponse.json({ answer: '無法解析問題關鍵字，請換個說法。', sources: [] });
     }
 
@@ -198,6 +206,28 @@ export async function POST(req: NextRequest) {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .slice(0, TOP_N);
+
+    // 來源去重 + citation 連結（/[category]/[slug]，與 catch-all 路由一致）— 兩模式共用
+    const seenPre = new Set<string>();
+    const sources = scored
+      .filter((x) => (seenPre.has(x.c.path) ? false : (seenPre.add(x.c.path), true)))
+      .map((x) => ({
+        name: x.c.path.replace(/^.*\//, '').replace(/\.md$/, ''),
+        path: x.c.path,
+        url: `/${x.c.category}/${x.c.slug}`,
+      }));
+
+    // ── search 模式（SYS-10 LINE）：回 top-N 片段 + 來源，不呼叫 Gemini（呼叫端以自身 QA_SYSTEM 融合生成）──
+    if (mode === 'search') {
+      const searchChunks = scored.map((x) => ({
+        path: x.c.path,
+        category: x.c.category,
+        slug: x.c.slug,
+        title: x.c.title,
+        text: x.c.text.slice(0, 2000), // 片段截斷，控 LINE 端語料量（8×2000 ≤16K 字 << flash context）
+      }));
+      return NextResponse.json({ mode: 'search', chunks: searchChunks, sources });
+    }
 
     if (scored.length === 0) {
       return NextResponse.json({
@@ -209,16 +239,7 @@ export async function POST(req: NextRequest) {
 
     const answer = await generateAnswer(question, scored.map((x) => x.c));
 
-    // 來源去重 + 建 citation 連結（/[category]/[slug]，與 SYS-08 catch-all 路由一致）
-    const seen = new Set<string>();
-    const sources = scored
-      .filter((x) => (seen.has(x.c.path) ? false : (seen.add(x.c.path), true)))
-      .map((x) => ({
-        name: x.c.path.replace(/^.*\//, '').replace(/\.md$/, ''),
-        path: x.c.path,
-        url: `/${x.c.category}/${x.c.slug}`,
-      }));
-
+    // sources 已於上方共用段（search/answer 兩模式）計算，此處直接回傳
     return NextResponse.json({ answer, sources });
   } catch (e) {
     console.error('[/api/ask]', e);
