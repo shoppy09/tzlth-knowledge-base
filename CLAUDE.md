@@ -7,7 +7,7 @@
 - **URL**：https://knowledge.careerssl.com
 - **GitHub repo**：shoppy09/tzlth-knowledge-base
 - **本地路徑**：C:\Users\USER\Desktop\CLAUDE寫工具\knowledge-base
-- **部署平台**：Vercel（手動 `npx vercel --prod`，無自動部署）
+- **部署平台**：Vercel｜🔴 **2026-08-23 dashboard 實查更正：auto-deploy 是「開啟」的**（Deployments 證每 commit 皆有 git-source 部署，含純 docs commit `28581b7`／`5ee63cd`）⇒ **push 即上線**，`npx vercel --prod` 為加速/備援。原記「無自動部署」與實際不符（總部規則零的全域「永久停用」為誤通則，見 RCF-153）
 - **狀態**：上線中（live，驗證於 2026-05-23）
 
 ## 技術架構
@@ -50,7 +50,7 @@
 
 ### 部署規則（HARD STOP）
 1. **修改後必須 build 驗證**：`npm run build`
-2. **build 通過後 push + 部署**：`git push` → `npx vercel --prod`
+2. **build 通過後 push + 部署**：`git push`（**即觸發 auto-deploy 上線**，2026-08-23 實查）→ `npx vercel --prod` 僅在需要立即上線時執行。⛔ **`npm run build` 仍不可跳過**：build 失敗時 Vercel 靜默保留舊版
 3. **部署後必須驗證**：打開 URL 確認首頁、分類頁、文章頁正常
 
 ### Server Component 規則
@@ -70,7 +70,7 @@
 
 ## 收尾七件事（每次對話結束前必做）
 收尾完整規則詳見**總部 CLAUDE.md →「核心原則零：收尾七件事」**（7 步驟：git push / 最近修改記錄 / tasks.md / inventory.json / daily-log / reflection-log / 品質自查 HARD STOP / 未完成清單 HARD STOP，均對總部檔案執行；2026-07-12 規則盤點指針化，原 4 件事清單為 D6 漏網）。
-> 部署特例：build → push → `npx vercel --prod`。
+> 部署特例：build → push（**push 即 auto-deploy 上線**，2026-08-23 實查更正）→ `npx vercel --prod` 為加速/備援。⚠️ 本機 Vercel 憑證已於 08-15～08-22 間消失，待 Tim `vercel login`；本 repo 因 auto-deploy 開啟不受影響。
 
 ## 最近修改記錄
 
