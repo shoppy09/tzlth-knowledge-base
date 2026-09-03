@@ -59,6 +59,11 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     icon: '🧩',
     description: '深度跨分析合成 — 從學習分析選取群集全文跨篇整合，萃取單篇看不到的新洞察（知識編譯 SKILL 產出）',
   },
+  assessments: {
+    label: '評估與迭代',
+    icon: '📈',
+    description: '帶分數/基線、可跨期比較的評估快照與追蹤表 — CITE 40 網域權威基線＋GEO 週測/月檢趨勢；README 為跨家評估索引（RCF-169）',
+  },
   cases: {
     label: '客戶案例',
     icon: '👤',
@@ -216,8 +221,8 @@ export async function getAllCategories(): Promise<KnowledgeCategory[]> {
           if (!i.name.endsWith('.md')) return false;
           // overview：只收 allowlist 精選根檔
           if (key === 'overview') return ROOT_ALLOWLIST.includes(i.name);
-          // domains 破例保留 README（D1-D6 領域導覽 + 掃描紀錄索引）；其餘分類過濾 README
-          if (i.name === 'README.md' && key !== 'domains') return false;
+          // domains/assessments 破例保留 README（前者＝D1-D6 領域導覽；後者＝跨家評估索引＝Tim 檢視入口，RCF-169）；其餘分類過濾 README
+          if (i.name === 'README.md' && key !== 'domains' && key !== 'assessments') return false;
           // decisions: 只排除 RCF 範本，其餘 RCF 規格層變更紀錄顯示（內部站，2026-06-27）
           if (key === 'decisions' && i.name === 'RCF-000-template.md') return false;
           return true;
