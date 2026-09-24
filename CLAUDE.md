@@ -76,6 +76,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-09-24 | 【DEV】新增 `.gitattributes`：文字檔一律以 LF 存入 repo、二進位檔明列不轉換（總部批次:B28／RCF-198 統一推送）。本 repo renormalize 零檔變動（index 原本即全為 LF）；零程式碼改動 | ✅ |
 | 2026-07-30 | **RCF-143 工程 3：`/api/ask` 開放圖書館 AI-query 層（4-A 輕量 RAG）**：新增 `app/api/ask/route.ts`（POST 拉 tzlth-hq `data/search-index.json` raw media type + 記憶體計分〔移植 knowledge-hook.py 中文 2/3-gram + SYNONYMS + references 降權 0.35〕→ gemini-flash-latest 帶引用生成〔強制接地/不杜撰/A 館邊界揭露/prompt-injection 隔離〕；GET ?health 唯讀計量）+ `app/components/AskBox.tsx`（D4 首頁問答框，client component）+ page.tsx 插入。D1=B/D2 免費層/D3 Hobby+Fluid maxDuration=60/D4 首頁框。commit db3acf5 → vercel --prod ● Ready。**GET health 生產驗證 ✅**（>1MB raw 實抓 / 5 夾 160 檔 1215 塊 / Basic Auth）；順修 Next15→16 + 8→11 分類 stale。⏳ POST 生成待 Tim 設 GEMINI_API_KEY → 補驗改 live。deploy-verify SYS-08-2026-07-30（tzlth-hq）| ⚠️ deployed_unverified（POST 待 key）|
 | 2026-04-15 | 初始建立：Next.js 15 + App Router + GitHub API 讀取，首頁/分類頁/文章頁路由 | ✅ 上線 |
 | 2026-04-15 | 修復：移除 Server Component 中的 onMouseEnter/onMouseLeave event handler（改用 CSS）| ✅ 已部署 |
