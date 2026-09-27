@@ -18,6 +18,10 @@ export const config = {
 };
 
 export function middleware(req: NextRequest) {
+  // /api/version：唯一公開路徑（部署自報，見該 route 檔頭，2026-09-28）。精確比對、放在 env 檢查之前，
+  // 比照儀表板 middleware 同一寫法；/api/version/x 等延伸路徑仍受保護。
+  if (req.nextUrl.pathname === '/api/version') return NextResponse.next();
+
   const expectedUser = process.env.BASIC_AUTH_USER;
   const expectedPass = process.env.BASIC_AUTH_PASSWORD;
 
