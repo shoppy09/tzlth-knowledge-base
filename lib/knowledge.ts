@@ -23,7 +23,15 @@ export interface KnowledgeCategory {
   files: KnowledgeFile[];
 }
 
+// ⛔ 本物件＝分類的唯一清單，**物件鍵順序＝首頁顯示順序**（getAllCategories 以 Object.keys 讀取）。
+// WHY（2026-09-28）：原本首頁另有一份硬編 keys 陣列，09-03 加 assessments 只改了這裡、漏改那份 ⇒
+//   該分類 25 天沒上首頁、首頁搜尋也搜不到。新增分類＝只在這裡加一個鍵，不要再建第二份清單。
 export const CATEGORY_DEFS: Record<string, { label: string; icon: string; description: string }> = {
+  overview: {
+    label: '核心參考',
+    icon: '📌',
+    description: 'knowledge/ 根層精選參考檔 — 客戶洞察 Pattern、課程資訊時效、洞察↔方法論地圖等諮詢/內容創作高頻參考',
+  },
   methodology: {
     label: '方法論',
     icon: '🧠',
@@ -33,6 +41,11 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     label: '操作 SOP',
     icon: '⚙️',
     description: '知識流入管理、LINE 廣播、部署流程、諮詢 SOP 等操作手冊',
+  },
+  automations: {
+    label: '自動化工具',
+    icon: '🤖',
+    description: '全站自動化工具登錄冊（A-XX 編號）— GitHub Actions、Vercel Cron、GAS、Claude Code Hooks、預約系統 in-process 計時器',
   },
   decisions: {
     label: '決策記錄',
@@ -72,17 +85,7 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
   product: {
     label: '產品知識庫',
     icon: '📦',
-    description: '工作坊 W1-W5、社大課程 C1-C5、診斷包 D1 的課程設計與教材',
-  },
-  automations: {
-    label: '自動化工具',
-    icon: '🤖',
-    description: 'A-01~A-21 全站自動化工具登錄冊 — GitHub Actions、Vercel Cron、GAS、Claude Code Hooks、Northflank Cron',
-  },
-  overview: {
-    label: '核心參考',
-    icon: '📌',
-    description: 'knowledge/ 根層精選參考檔 — 客戶洞察 Pattern、課程資訊時效、洞察↔方法論地圖等諮詢/內容創作高頻參考',
+    description: '工作坊 W2-W7、社大課程 C1-C5、診斷包 D1 的課程設計與教材',
   },
 };
 
@@ -179,11 +182,12 @@ function buildDisplayName(slug: string): string {
   // Friendly top-folder names for known product codes
   const folderLabels: Record<string, string> = {
     'w1-resume-workshop': 'W1 履歷工作坊',
-    'w2-career-exploration': 'W2 職涯探索',
+    'w2-career-planning-workshop': 'W2 個人職涯規劃',
     'w3-enterprise-workshop': 'W3 企業版',
     'w4-manager-workshop': 'W4 主管引導版',
     'w5-military-transition': 'W5 軍職換跑道',
     'w6-resume-interview-workshop': 'W6 履歷×面試',
+    'w7-stress-management': 'W7 職場壓力重構',
     'c1-second-career': 'C1 第二人生',
     'c2-resume-workshop': 'C2 履歷撰寫',
     'c3-career-checkup': 'C3 職涯健檢',
@@ -202,47 +206,15 @@ function buildDisplayName(slug: string): string {
   return `${topFolder} › ${fileName}`;
 }
 
-export async function getAllCategories(): Promise<KnowledgeCategory[]> {
-  const keys = ['overview', 'methodology', 'operations', 'automations', 'decisions', 'domains', 'references', 'analyses', 'syntheses', 'cases', 'product'];
-  // 巢狀資料夾（含子目錄 .md）需 recursive fetch
-  const nested = (k: string) => k === 'product' || k === 'domains';
-  return Promise.all(
-    keys.map(async (key) => {
-      const def = CATEGORY_DEFS[key];
-      // overview＝knowledge/ 根層 fetch（非 knowledge/overview）；巢狀走 recursive；其餘走子目錄
-      const items = key === 'overview'
-        ? await fetchDir('knowledge').catch(() => [])
-        : nested(key)
-        ? await fetchDirRecursive(`knowledge/${key}`).catch(() => [])
-        : await fetchDir(`knowledge/${key}`).catch(() => []);
-      const files: KnowledgeFile[] = items
-        .filter((i) => {
-          if (!i.type || i.type !== 'file') return false;
-          if (!i.name.endsWith('.md')) return false;
-          // overview：只收 allowlist 精選根檔
-          if (key === 'overview') return ROOT_ALLOWLIST.includes(i.name);
-          // domains/assessments 破例保留 README（前者＝D1-D6 領域導覽；後者＝跨家評估索引＝Tim 檢視入口，RCF-169）；其餘分類過濾 README
-          if (i.name === 'README.md' && key !== 'domains' && key !== 'assessments') return false;
-          // decisions: 只排除 RCF 範本，其餘 RCF 規格層變更紀錄顯示（內部站，2026-06-27）
-          if (key === 'decisions' && i.name === 'RCF-000-template.md') return false;
-          return true;
-        })
-        .map((i) => {
-          const slug = buildSlug(i.path, key);
-          return {
-            slug,
-            name: (nested(key) || key === 'overview') ? buildDisplayName(slug) : i.name.replace(/\.md$/, ''),
-            path: i.path,
-          };
-        });
-      return { key, ...def, files };
-    })
-  );
-}
+// 分類 → 檔案清單的唯一實作（首頁與分類頁共用）。
+// WHY（2026-09-28）：原本 getAllCategories 與 getCategoryFiles 各寫一份過濾規則，09-03 加
+//   assessments 的 README 例外只改了前者 ⇒ 分類頁與文章側欄看不到 README（跨家評估索引）。
+const NESTED = new Set(['product', 'domains']); // 含子目錄 .md，需 recursive fetch
+const README_VISIBLE = new Set(['domains', 'assessments']); // README 本身就是內容（領域導覽／跨家評估索引，RCF-169）
 
-export async function getCategoryFiles(category: string): Promise<KnowledgeFile[]> {
-  // 巢狀資料夾（product/ domains/）需 recursive fetch 捕捉子目錄 .md
-  const nested = category === 'product' || category === 'domains';
+async function listCategoryFiles(category: string): Promise<KnowledgeFile[]> {
+  const nested = NESTED.has(category);
+  // overview＝knowledge/ 根層 fetch（非 knowledge/overview）；巢狀走 recursive；其餘走子目錄
   const items = category === 'overview'
     ? await fetchDir('knowledge').catch(() => [])
     : nested
@@ -254,8 +226,7 @@ export async function getCategoryFiles(category: string): Promise<KnowledgeFile[
       if (!i.name.endsWith('.md')) return false;
       // overview：只收 allowlist 精選根檔
       if (category === 'overview') return ROOT_ALLOWLIST.includes(i.name);
-      // domains 破例保留 README（領域導覽 + 掃描紀錄索引）；其餘分類過濾 README
-      if (i.name === 'README.md' && category !== 'domains') return false;
+      if (i.name === 'README.md' && !README_VISIBLE.has(category)) return false;
       // decisions: 只排除 RCF 範本，其餘 RCF 規格層變更紀錄顯示（內部站，2026-06-27）
       if (category === 'decisions' && i.name === 'RCF-000-template.md') return false;
       return true;
@@ -268,6 +239,20 @@ export async function getCategoryFiles(category: string): Promise<KnowledgeFile[
         path: i.path,
       };
     });
+}
+
+export async function getAllCategories(): Promise<KnowledgeCategory[]> {
+  return Promise.all(
+    Object.keys(CATEGORY_DEFS).map(async (key) => ({
+      key,
+      ...CATEGORY_DEFS[key],
+      files: await listCategoryFiles(key),
+    }))
+  );
+}
+
+export async function getCategoryFiles(category: string): Promise<KnowledgeFile[]> {
+  return listCategoryFiles(category);
 }
 
 export async function getFileContent(category: string, slug: string): Promise<string> {

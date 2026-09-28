@@ -146,7 +146,7 @@ export default async function HomePage() {
       }}>
         <span>🔄</span>
         <span>
-          參考文件每週一 09:30 自動從 LINE 群組同步 ·
+          參考文件每週一、週五 09:30 自動從 LINE 群組同步 ·
           方法論與 SOP 由 Tim 手動更新 ·
           內容儲存於{' '}
           <a
