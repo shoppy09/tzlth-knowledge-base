@@ -79,6 +79,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-10-10 | 【KM/DEV】**D6 分類名稱改「AI 工具動態與應用」＋`.gitattributes` 順序修正**：L201 顯示名＋L58 分類說明（RCF-233 漏改）；`* text=auto` 移到二進位規則前（pdf＝unset）。詳 archive 2026-10 | ✅ |
 | 2026-09-28 | 【DEV】**分類改單一清單**：首頁讀 `Object.keys(CATEGORY_DEFS)`、首頁與分類頁共用 `listCategoryFiles()`——修 09-03 assessments 未上首頁／README 被濾（25 天）；W2 目錄名、W7 標籤、自動化描述、頁尾週五同步更正。詳 archive | ✅ |
 | 2026-09-28 | 【DEV/SEC】新增公開端點 `/api/version`（回 commit 7 碼／node 大版本／region，noindex、no-store）；`middleware.ts` 在 env 檢查前**精確路徑**放行，其餘全站 Basic Auth 不變（HQ tasks「其餘部署面 repo 無法自報正在服務的是哪一次部署」） | ✅ |
 | 2026-09-24 | 【DEV】新增 `.gitattributes`：文字檔一律以 LF 存入 repo、二進位檔明列不轉換（總部批次:B28／RCF-198 統一推送）。本 repo renormalize 零檔變動（index 原本即全為 LF）；零程式碼改動 | ✅ |

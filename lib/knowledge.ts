@@ -55,7 +55,7 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
   domains: {
     label: '知識領域掃描',
     icon: '🌐',
-    description: 'D1-D6 主動知識掃描 findings — 台灣職場趨勢、職涯方法論、課程設計、競品動態、課程事實更新、AI 工具設定',
+    description: 'D1-D6 主動知識掃描 findings — 台灣職場趨勢、職涯方法論、課程設計、競品動態、課程事實更新、AI 工具動態與應用',
   },
   references: {
     label: '參考文件',
@@ -198,7 +198,7 @@ function buildDisplayName(slug: string): string {
     'D3-course-design': 'D3 課程設計',
     'D4-competitor-dynamics': 'D4 競品動態',
     'D5-course-content-update': 'D5 課程內容事實',
-    'D6-tool-setup': 'D6 工具設定最佳實踐',
+    'D6-tool-setup': 'D6 AI 工具動態與應用',
   };
 
   const topFolder = folderLabels[parts[0]] || parts[0];
