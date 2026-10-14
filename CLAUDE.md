@@ -52,6 +52,7 @@
 ### 部署規則（HARD STOP）
 1. **修改後必須 build 驗證**：`npm run build`
 2. **build 通過後 push + 部署**：`git push`（**即觸發 auto-deploy 上線**，2026-08-23 實查）→ `npx vercel --prod` 僅在需要立即上線時執行。⛔ **`npm run build` 仍不可跳過**：build 失敗時 Vercel 靜默保留舊版
+> 🔒 **本機 build 閘（2026-10-14 起，總部 L820／RCF-244）**：本 repo 的 `.git/hooks/pre-push` 會比對要推的內容有沒有本機 build 成功的記號；沒有、且工作樹乾淨 → 自動跑 `npm run build`（約 15～30 秒），失敗就擋下 ⇒ **push 指令要給足 timeout（≥300 秒）**。推完查部署結果：`python -X utf8 C:/Users/USER/Desktop/tzlth-hq/scripts/deploy_status.py 知識庫 --wait`（⚠️ 最多等 10 分鐘，Bash timeout 給 660000）。略過：`TZLTH_SKIP_BUILD_GATE=1 git push`（會記錄、收尾會提醒）。本體與安裝在總部 `scripts/build_gate.py`、`scripts/install_git_hooks.py`；本機 hook 不入版控，換機要重裝。
 3. **部署後必須驗證**：打開 URL 確認首頁、分類頁、文章頁正常
 
 ### Server Component 規則
@@ -79,6 +80,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-10-14 | 【DEV】**本機 build 閘＋推送後部署結果查詢（總部 L820，RCF-244）**：`.git/hooks/pre-push` 由總部安裝，沒有 build 記號就自動 build、失敗擋下；推完用總部 `deploy_status.py` 查部署結果。本 repo 程式碼未動。說明見部署段 🔒 行 | ✅ |
 | 2026-10-10 | 【KM/DEV】**D6 分類名稱改「AI 工具動態與應用」＋`.gitattributes` 順序修正**：L201 顯示名＋L58 分類說明（RCF-233 漏改）；`* text=auto` 移到二進位規則前（pdf＝unset）。詳 archive 2026-10 | ✅ |
 | 2026-09-28 | 【DEV】**分類改單一清單**：首頁讀 `Object.keys(CATEGORY_DEFS)`、首頁與分類頁共用 `listCategoryFiles()`——修 09-03 assessments 未上首頁／README 被濾（25 天）；W2 目錄名、W7 標籤、自動化描述、頁尾週五同步更正。詳 archive | ✅ |
 | 2026-09-28 | 【DEV/SEC】新增公開端點 `/api/version`（回 commit 7 碼／node 大版本／region，noindex、no-store）；`middleware.ts` 在 env 檢查前**精確路徑**放行，其餘全站 Basic Auth 不變（HQ tasks「其餘部署面 repo 無法自報正在服務的是哪一次部署」） | ✅ |
