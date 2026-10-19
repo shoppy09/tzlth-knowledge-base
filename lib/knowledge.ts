@@ -241,6 +241,33 @@ async function listCategoryFiles(category: string): Promise<KnowledgeFile[]> {
     });
 }
 
+// ── 文章網址白名單（2026-10-19 HQ 批次:B63，資安稽核 10-17 C-9）─────────────────
+// WHY：原本任何 slug 都直接拼進 GitHub contents API 路徑（帶 token）⇒ /overview/<任意檔名> 讀得到
+//      knowledge/ 根層任何 .md；slug 帶 .. 會被網址化簡成 knowledge/ 以外的路徑。
+// 規則：overview＝ROOT_ALLOWLIST；其他分類＝knowledge/<分類>/ 底下（含子資料夾）實際存在的 .md。
+//   ⛔ 不能改用側欄清單（listCategoryFiles）：cases/reports/ 22 份報告不在側欄，但問答框來源連結與
+//      LINE Bot 開放圖書館都會指向它們（search-index 收 5 夾全部子資料夾）。
+//   清單抓不到（GitHub 暫時失敗）→ 回 false＝擋下（Tim 2026-10-19 裁：安全優先；fetch 有 5 分鐘快取）。
+function normSlug(s: string): string {
+  let t = s;
+  try {
+    t = decodeURIComponent(s); // 參數可能已解碼或仍是 %XX，兩種都收斂成同一個字串
+  } catch {
+    /* 非法 % 序列：照原字串比對，比不到就擋 */
+  }
+  return t.normalize('NFC');
+}
+
+export async function isAllowedArticle(category: string, slug: string): Promise<boolean> {
+  const s = normSlug(slug);
+  if (!s || s.includes('\\') || s.split('/').some((p) => p === '..' || p === '.' || p === '')) return false;
+  if (!Object.prototype.hasOwnProperty.call(CATEGORY_DEFS, category)) return false;
+  if (category === 'overview') return ROOT_ALLOWLIST.includes(`${s}.md`);
+  const items = await fetchDirRecursive(`knowledge/${category}`).catch(() => []);
+  const want = `knowledge/${category}/${s}.md`;
+  return items.some((i) => i.type === 'file' && i.path.normalize('NFC') === want);
+}
+
 export async function getAllCategories(): Promise<KnowledgeCategory[]> {
   return Promise.all(
     Object.keys(CATEGORY_DEFS).map(async (key) => ({

@@ -3,6 +3,7 @@ import { marked } from 'marked';
 import {
   getCategoryFiles,
   getFileContent,
+  isAllowedArticle,
   getFileLastModified,
   CATEGORY_DEFS,
   extractTitle,
@@ -233,6 +234,8 @@ export default async function ArticlePage({
   const slug = slugParts.join('/');
   const def = CATEGORY_DEFS[category];
   if (!def) notFound();
+  // [2026-10-19 HQ 批次:B63] 只讀得到該分類資料夾內真的存在的檔（overview 只有精選檔）；.. 一律 404
+  if (!(await isAllowedArticle(category, slug))) notFound();
 
   let content: string;
   try {

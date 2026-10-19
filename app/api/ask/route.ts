@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { guard } from '@/lib/request-guard';
 
 /**
  * /api/ask — 開放圖書館 AI-query 層（RCF-143 工程 3，4-A 輕量 RAG）
@@ -167,6 +168,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // [2026-10-19 HQ 批次:B63] 跨站請求防護：同源＋只收 JSON（LINE Bot 伺服器端呼叫不帶 Origin，照常放行）
+  const blocked = guard(req);
+  if (blocked) return blocked;
+
   let question = '';
   let mode = 'answer'; // 'answer'（預設，web AskBox：檢索+Gemini 生成）｜'search'（SYS-10 LINE：只回片段，由呼叫端自行生成）
   try {

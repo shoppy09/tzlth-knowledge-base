@@ -44,6 +44,10 @@
 | `syntheses` | `knowledge/syntheses/` | 知識編譯（深度跨分析合成）|
 | `overview` | `knowledge/`（根層 allowlist）| 核心參考（client-patterns / freshness / architecture 等精選根檔）|
 
+> ⛔ **文章網址白名單（2026-10-19 HQ 批次:B63，資安稽核 10-17 C-9）**：`lib/knowledge.ts` `isAllowedArticle()`——overview 只認 `ROOT_ALLOWLIST`；其他分類只認 `knowledge/<分類>/` 底下（**含子資料夾**）實際存在的 .md；含 `..`（含 `%2e%2e`、`%2F` 編碼）一律 404。原本 slug 直接拼進帶 token 的 GitHub contents API 路徑 ⇒ `/overview/<任意檔名>` 讀得到根層任何 .md、`..` 可跳出 knowledge/。
+> ⚠️ **不可改用側欄清單當白名單**：`cases/reports/` 22 份報告不在側欄，但 `/api/ask` 來源連結與 LINE Bot 開放圖書館都會指向它們。⚠️ 檔案清單抓不到（GitHub 失敗）→ 全部 404（Tim 裁：安全優先，fetch 5 分鐘快取）。
+> **`/api/ask` POST 跨站防護**：`lib/request-guard.ts`（同源＋只收 JSON；不帶 Origin 放行＝LINE Bot 伺服器端呼叫）。
+
 > ⚠️ 分類實為 **12 類**＝`lib/knowledge.ts` `CATEGORY_DEFS` 的鍵（**物件鍵順序＝首頁顯示順序**，2026-09-28 起首頁以 `Object.keys` 讀取；新增分類只加這一處）：overview / methodology / operations / automations / decisions / domains / references / analyses / syntheses / assessments / cases / product（domains/product 遞迴子目錄）。⛔ 2026-09-28 前首頁另有一份硬編 11 鍵陣列，09-03 加 assessments 漏改 ⇒ 該分類 25 天未上首頁；可見性規則全貌見 HQ `projects/SYS-08-knowledge-base.md` §C。
 > **/api/ask 語料範圍 ≠ 本渲染分類**：AI-query 只檢索 **5 夾研究語料**（analyses / references / domains / syntheses / cases，RCF-143 C 館），刻意不含 methodology（→ NotebookLM A 館）/ product / operations / decisions。
 
@@ -80,6 +84,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-10-19 | 【DEV/SEC】**文章網址白名單＋問答跨站防護＋Next 16.3.8（HQ 批次:B63）**：`isAllowedArticle()`（分類資料夾實際檔案、overview 精選、擋 ..）；`/api/ask` 同源＋只收 JSON。本機假 GitHub 實測全過。詳 archive／本檔分類表下 | ✅ |
 | 2026-10-14 | 【DEV】**本機 build 閘＋推送後部署結果查詢（總部 L820，RCF-244）**：`.git/hooks/pre-push` 由總部安裝，沒有 build 記號就自動 build、失敗擋下；推完用總部 `deploy_status.py` 查部署結果。本 repo 程式碼未動。說明見部署段 🔒 行 | ✅ |
 | 2026-10-10 | 【KM/DEV】**D6 分類名稱改「AI 工具動態與應用」＋`.gitattributes` 順序修正**：L201 顯示名＋L58 分類說明（RCF-233 漏改）；`* text=auto` 移到二進位規則前（pdf＝unset）。詳 archive 2026-10 | ✅ |
 | 2026-09-28 | 【DEV】**分類改單一清單**：首頁讀 `Object.keys(CATEGORY_DEFS)`、首頁與分類頁共用 `listCategoryFiles()`——修 09-03 assessments 未上首頁／README 被濾（25 天）；W2 目錄名、W7 標籤、自動化描述、頁尾週五同步更正。詳 archive | ✅ |
