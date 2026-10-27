@@ -49,7 +49,7 @@
 > **`/api/ask` POST 跨站防護**：`lib/request-guard.ts`（同源＋只收 JSON；不帶 Origin 放行＝LINE Bot 伺服器端呼叫）。
 
 > ⚠️ 分類實為 **12 類**＝`lib/knowledge.ts` `CATEGORY_DEFS` 的鍵（**物件鍵順序＝首頁顯示順序**，2026-09-28 起首頁以 `Object.keys` 讀取；新增分類只加這一處）：overview / methodology / operations / automations / decisions / domains / references / analyses / syntheses / assessments / cases / product（domains/product 遞迴子目錄）。⛔ 2026-09-28 前首頁另有一份硬編 11 鍵陣列，09-03 加 assessments 漏改 ⇒ 該分類 25 天未上首頁；可見性規則全貌見 HQ `projects/SYS-08-knowledge-base.md` §C。
-> **/api/ask 語料範圍 ≠ 本渲染分類**：AI-query 只檢索 **5 夾研究語料**（analyses / references / domains / syntheses / cases，RCF-143 C 館），刻意不含 methodology（→ NotebookLM A 館）/ product / operations / decisions。
+> **/api/ask 語料範圍 ≠ 本渲染分類**：AI-query 只檢索 **5 夾研究語料**（analyses / references / domains / syntheses / cases，RCF-143 C 館），刻意不含 methodology（→ NotebookLM A 館）/ product / operations / decisions。**2026-10-27 起 cases 只收洞察卡、不收 `cases/reports/` 報告書全文，洞察卡先遮罩 email／身分證／手機／統編**（HQ `build_search_index.py`；route `allowChunk()` 再擋一次，answer／search 兩模式都過；Tim 裁 D2 (乙)，HQ RCF-275）。網站頁面照常顯示 reports，只是不送 Gemini。
 
 ## 核心規則
 
@@ -66,7 +66,7 @@
 
 ### 環境變數
 - `GITHUB_TOKEN`：Personal Access Token（Fine-Grained，Contents:Read），讀 tzlth-hq `knowledge/` + `data/search-index.json`（raw media type 支援 >1MB）
-- `GEMINI_API_KEY`：Google AI Studio 免費層 key（RCF-143 D2，/api/ask 生成層）。⚠️ **免費層會用輸入訓練 Google 模型**——送出語料為去識別化 5 夾研究語料（無 LEG-1 PII，Tim 接受 IP 訓練權衡，見 security-log 2026-07-30）
+- `GEMINI_API_KEY`：Google AI Studio 免費層 key（RCF-143 D2，/api/ask 生成層）。⚠️ **免費層會用輸入訓練 Google 模型**——送出語料為去識別化 5 夾研究語料（無 LEG-1 PII，Tim 接受 IP 訓練權衡，見 security-log 2026-07-30）；2026-10-27 起不含諮詢報告書全文、洞察卡先遮罩（RCF-275）
 - `BASIC_AUTH_USER`／`BASIC_AUTH_PASSWORD`：`middleware.ts` 全站 Basic Auth（2026-06-27）；**未設＝一律 503（fail-closed）**。與看板／儀表板同名（值是否相同未記錄）
 - `VERCEL_GIT_COMMIT_SHA`／`VERCEL_REGION`：Vercel 內建（`/api/version` 讀取），不需設定
 - 設定位置：Vercel 環境變數（Production + Preview + Development）
@@ -84,6 +84,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-10-27 | 【SEC/KM】**問答不再把諮詢報告書全文送 Gemini 免費層（HQ RCF-275，Tim 裁 D2 (乙)）**：route `allowChunk()` 只放五類、擋 `cases/reports/`（answer／search 兩模式）；本機以現行索引實測新版擋 147／147、舊版 0。索引端改在 HQ。詳 archive | ✅ |
 | 2026-10-19 | 【DEV/SEC】**文章網址白名單＋問答跨站防護＋Next 16.3.8（HQ 批次:B63）**：`isAllowedArticle()`（分類資料夾實際檔案、overview 精選、擋 ..）；`/api/ask` 同源＋只收 JSON。本機假 GitHub 實測全過。詳 archive／本檔分類表下 | ✅ |
 | 2026-10-14 | 【DEV】**本機 build 閘＋推送後部署結果查詢（總部 L820，RCF-244）**：`.git/hooks/pre-push` 由總部安裝，沒有 build 記號就自動 build、失敗擋下；推完用總部 `deploy_status.py` 查部署結果。本 repo 程式碼未動。說明見部署段 🔒 行 | ✅ |
 | 2026-10-10 | 【KM/DEV】**D6 分類名稱改「AI 工具動態與應用」＋`.gitattributes` 順序修正**：L201 顯示名＋L58 分類說明（RCF-233 漏改）；`* text=auto` 移到二進位規則前（pdf＝unset）。詳 archive 2026-10 | ✅ |

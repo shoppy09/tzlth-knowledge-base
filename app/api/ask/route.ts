@@ -12,6 +12,9 @@ import { guard } from '@/lib/request-guard';
  *
  * 存取：落在 middleware.ts Basic Auth 內部站；瀏覽器對同源自動夾帶憑證。
  * D2（Tim 拍板）：GEMINI_API_KEY 免費層（去識別化語料，無 LEG-1 PII，Tim 接受 IP 訓練權衡）。
+ * 2026-10-27（HQ RCF-275，Tim 裁 D2 (乙)）：免費層條款要求不送個人資料 ⇒ 索引端不收 cases/reports/（諮詢報告書全文）、
+ *   cases 洞察卡先做確定性遮罩（HQ scripts/build_search_index.py）；本 route 再擋一次（allowChunk），
+ *   answer 與 search 兩種模式都過——search 模式的片段 LINE Bot 也會再送 Gemini。
  */
 
 export const maxDuration = 60; // Hobby+Fluid 可達；實際單次生成 ~2-6s，即使退回 10s 硬限仍足
@@ -51,9 +54,17 @@ async function loadIndex(): Promise<Chunk[]> {
   );
   if (!res.ok) throw new Error(`index fetch failed: ${res.status}`);
   const data = JSON.parse(await res.text());
-  const chunks: Chunk[] = Array.isArray(data.chunks) ? data.chunks : [];
+  const chunks: Chunk[] = (Array.isArray(data.chunks) ? data.chunks : []).filter(allowChunk);
   _cache = { at: Date.now(), chunks };
   return chunks;
+}
+
+// ── 第二道過濾（2026-10-27）：索引若被別的流程改到，也只放這五類、不放報告書全文 ──
+const ALLOWED_CATEGORIES = new Set(['analyses', 'references', 'domains', 'syntheses', 'cases']);
+const BLOCKED_PATH_PREFIXES = ['cases/reports/'];
+function allowChunk(c: Chunk): boolean {
+  if (!c || typeof c.path !== 'string' || !ALLOWED_CATEGORIES.has(c.category)) return false;
+  return !BLOCKED_PATH_PREFIXES.some((p) => c.path.startsWith(p));
 }
 
 // ── 檢索：移植 knowledge-hook.py（等價同義詞表、僅語境永遠可互換者）──
