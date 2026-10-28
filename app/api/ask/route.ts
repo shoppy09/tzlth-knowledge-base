@@ -12,7 +12,7 @@ import { guard } from '@/lib/request-guard';
  *
  * 存取：落在 middleware.ts Basic Auth 內部站；瀏覽器對同源自動夾帶憑證。
  * D2（Tim 拍板）：GEMINI_API_KEY 免費層（去識別化語料，無 LEG-1 PII，Tim 接受 IP 訓練權衡）。
- * 2026-10-27（HQ RCF-275，Tim 裁 D2 (乙)）：免費層條款要求不送個人資料 ⇒ 索引端不收 cases/reports/（諮詢報告書全文）、
+ * 2026-10-27（HQ RCF-277，Tim 裁 D2 (乙)）：免費層條款要求不送個人資料 ⇒ 索引端不收 cases/reports/（諮詢報告書全文）、
  *   cases 洞察卡先做確定性遮罩（HQ scripts/build_search_index.py）；本 route 再擋一次（allowChunk），
  *   answer 與 search 兩種模式都過——search 模式的片段 LINE Bot 也會再送 Gemini。
  */
