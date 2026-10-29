@@ -84,6 +84,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-10-29 | 【SEC/DEV】**Next 16.3.8→16.4.3＋npm audit fix（HQ RCF-279，批次:B72）**：修 GHSA-2464／673q critical（Dependabot 漏報、npm audit 有報）；`153939c`，build、部署、未登入 401、本機 build 分類 12＝12 皆驗。HQ dev/deploy-verify/SYS-08-2026-10-29-next1643.md | ✅ |
 | 2026-10-27 | 【SEC/KM】**問答不再把諮詢報告書全文送 Gemini 免費層（HQ RCF-277，Tim 裁 D2 (乙)）**：route `allowChunk()` 只放五類、擋 `cases/reports/`（answer／search 兩模式）；本機以現行索引實測新版擋 147／147、舊版 0。索引端改在 HQ。詳 archive | ✅ |
 | 2026-10-19 | 【DEV/SEC】**文章網址白名單＋問答跨站防護＋Next 16.3.8（HQ 批次:B63）**：`isAllowedArticle()`（分類資料夾實際檔案、overview 精選、擋 ..）；`/api/ask` 同源＋只收 JSON。本機假 GitHub 實測全過。詳 archive／本檔分類表下 | ✅ |
 | 2026-10-14 | 【DEV】**本機 build 閘＋推送後部署結果查詢（總部 L820，RCF-244）**：`.git/hooks/pre-push` 由總部安裝，沒有 build 記號就自動 build、失敗擋下；推完用總部 `deploy_status.py` 查部署結果。本 repo 程式碼未動。說明見部署段 🔒 行 | ✅ |
