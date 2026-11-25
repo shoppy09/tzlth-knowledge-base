@@ -8,9 +8,9 @@ import { guard } from '@/lib/request-guard';
  *  - tzlth-hq GitHub Action 預建 data/search-index.json（5 夾語料：analyses/references/domains/syntheses/cases）
  *  - 本 route 以 GitHub raw media type 拉單檔（~1.4MB，>1MB 走 raw 支援 1-100MB）+ 記憶體計分
  *  - 檢索移植 scripts/knowledge-hook.py（中文 2/3-gram + SYNONYMS + 標題區加權 + references 降權）
- *  - gemini-flash-latest 生成帶引用答案（強制接地、不杜撰、A/B 館邊界揭露、prompt-injection 隔離）
+ *  - Gemini 生成帶引用答案（強制接地、不杜撰、A/B 館邊界揭露、prompt-injection 隔離）；模型與逾時見 MODEL／GEMINI_TIMEOUT_MS
  *
- * 存取：落在 middleware.ts Basic Auth 內部站；瀏覽器對同源自動夾帶憑證。
+ * 存取：落在 proxy.ts 登入閘內（2026-11-25 起登入頁＋30 天通行證，舊 Basic 標頭仍放行給 LINE Bot）。
  * D2（Tim 拍板）：GEMINI_API_KEY 免費層（去識別化語料，無 LEG-1 PII，Tim 接受 IP 訓練權衡）。
  * 2026-10-27（HQ RCF-277，Tim 裁 D2 (乙)）：免費層條款要求不送個人資料 ⇒ 索引端不收 cases/reports/（諮詢報告書全文）、
  *   cases 洞察卡先做確定性遮罩（HQ scripts/build_search_index.py）；本 route 再擋一次（allowChunk），
@@ -24,7 +24,12 @@ const REPO = 'tzlth-hq';
 const TOKEN = process.env.GITHUB_TOKEN;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const INDEX_PATH = 'data/search-index.json';
-const MODEL = 'gemini-flash-latest'; // 滾動別名（RCF-123，不用 2.5-flash）
+// 2026-11-25（HQ tasks「知識庫網站問答每題逾時 60 秒」，Tim「照建議修」）：原 'gemini-flash-latest'（滾動別名，RCF-123）
+//   線上 answer 模式連兩次 60 秒逾時（同請求 search 模式 1.3 秒）⇒ 改用 LINE Bot 正在用的 gemini-3.5-flash-lite
+//   （LINE Bot lib/gemini.js 備援模型，2026-11-07 實測我們的 key 可用；3.5 世代預設 thinking minimal，本處不送 thinkingConfig）。
+const MODEL = 'gemini-3.5-flash-lite';
+// 呼叫上限：逾時就回明確訊息＋來源連結，不讓使用者乾等到平台 60 秒強制中斷（504）
+const GEMINI_TIMEOUT_MS = 25_000;
 const TOP_N = 8;
 
 interface Chunk {
@@ -132,16 +137,31 @@ ${context}
 ===== 問題 =====
 ${question}`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    },
-  );
-  if (!res.ok) throw new Error(`gemini ${res.status}`);
-  const data = await res.json();
+  // 金鑰走 x-goog-api-key 標頭（不放網址；同 LINE Bot 2026-10-05 做法），並設呼叫上限
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  let data;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY as string },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal: controller.signal,
+      },
+    );
+    if (!res.ok) throw new Error(`gemini ${res.status}`);
+    data = await res.json();
+  } catch (e) {
+    if (controller.signal.aborted) {
+      console.error('[/api/ask] gemini timeout', GEMINI_TIMEOUT_MS);
+      return `（AI 回答超過 ${GEMINI_TIMEOUT_MS / 1000} 秒沒有回應，請稍後再問一次；下方來源可以直接點開閱讀）`;
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
   if (text) return text;
   // 無 text → 判斷被擋原因，回具體訊息（非籠統「生成失敗」）
