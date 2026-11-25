@@ -39,7 +39,11 @@ export default function AskBox() {
       let data: { answer?: string; sources?: Source[]; error?: string } = {};
       try { data = JSON.parse(raw); } catch { /* 非 JSON（認證/設定層回應）*/ }
       if (!res.ok) {
-        if (res.status === 401) setErr('需要登入（Basic Auth）——請重新整理頁面登入。');
+        if (res.status === 401) {
+          // 2026-11-25 改登入頁＋30 天通行證後：重新整理不會再跳帳密視窗 ⇒ 直接帶去登入頁，登入後回本頁
+          setErr('登入已過期，正在前往登入頁…');
+          window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+        }
         else if (res.status === 503) setErr(data.error || '服務尚未設定完成（請稍候或聯絡管理員）。');
         else setErr(data.error || '查詢失敗，請稍後再試。');
       } else {
