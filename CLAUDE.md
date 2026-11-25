@@ -26,7 +26,8 @@
                        POST：拉 tzlth-hq data/search-index.json（raw media type）
                        → 記憶體計分（移植 knowledge-hook.py）→ gemini-flash-latest 帶引用生成
                        GET ?health=1：唯讀索引計量（smoke test / 監控）
-/api/version         → 部署自報（公開，全站 Basic Auth 唯一例外；回 commit 7 碼／node 大版本／region，2026-09-28）
+/login、/api/auth/login、/api/auth/logout → 登入頁與登入／登出（公開；2026-11-25 起登入頁＋30 天通行證，舊 Basic 標頭仍放行）
+/api/version         → 部署自報（公開，不需登入的 API；回 commit 7 碼／node 大版本／region，2026-09-28）
 ```
 
 ## 知識庫來源資料夾對應
@@ -67,7 +68,8 @@
 ### 環境變數
 - `GITHUB_TOKEN`：Personal Access Token（Fine-Grained，Contents:Read），讀 tzlth-hq `knowledge/` + `data/search-index.json`（raw media type 支援 >1MB）
 - `GEMINI_API_KEY`：Google AI Studio 免費層 key（RCF-143 D2，/api/ask 生成層）。⚠️ **免費層會用輸入訓練 Google 模型**——送出語料為去識別化 5 夾研究語料（無 LEG-1 PII，Tim 接受 IP 訓練權衡，見 security-log 2026-07-30）；2026-10-27 起不含諮詢報告書全文、洞察卡先遮罩（RCF-277）
-- `BASIC_AUTH_USER`／`BASIC_AUTH_PASSWORD`：`middleware.ts` 全站 Basic Auth（2026-06-27）；**未設＝一律 503（fail-closed）**。與看板／儀表板同名（值是否相同未記錄）
+- `BASIC_AUTH_USER`／`BASIC_AUTH_PASSWORD`：`proxy.ts` 全站登入閘（2026-06-27 Basic Auth；2026-11-25 改登入頁＋30 天通行證，舊 Basic 標頭仍放行）；**未設＝一律 503（fail-closed）**。與看板／儀表板同名（值是否相同未記錄；通行證簽章字串本站專用，兩站不互通）
+- `SESSION_SECRET`（選設）：設了改用它簽通行證；改它或改密碼＝所有已登入裝置要重登
 - `VERCEL_GIT_COMMIT_SHA`／`VERCEL_REGION`：Vercel 內建（`/api/version` 讀取），不需設定
 - 設定位置：Vercel 環境變數（Production + Preview + Development）
 
@@ -84,6 +86,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-11-25 | 【DEV/SEC】**登入頁＋30 天通行證＋Next 16.4.6（HQ tasks L74，RCF-343 補記）**：13fd551；proxy.ts＋lib/session.ts（簽章字串本站專用）＋/login；舊 Basic 保留給 LINE Bot；測試 7、本機 17 項過。網站問答 Gemini 逾時另立待辦。HQ dev/deploy-verify/SYS-08-2026-11-25-login.md | ⚠️ deployed_unverified |
 | 2026-10-29 | 【SEC/DEV】**Next 16.3.8→16.4.3＋npm audit fix（HQ RCF-279，批次:B72）**：修 GHSA-2464／673q critical（Dependabot 漏報、npm audit 有報）；`153939c`，build、部署、未登入 401、本機 build 分類 12＝12 皆驗。HQ dev/deploy-verify/SYS-08-2026-10-29-next1643.md | ✅ |
 | 2026-10-27 | 【SEC/KM】**問答不再把諮詢報告書全文送 Gemini 免費層（HQ RCF-277，Tim 裁 D2 (乙)）**：route `allowChunk()` 只放五類、擋 `cases/reports/`（answer／search 兩模式）；本機以現行索引實測新版擋 147／147、舊版 0。索引端改在 HQ。詳 archive | ✅ |
 | 2026-10-19 | 【DEV/SEC】**文章網址白名單＋問答跨站防護＋Next 16.3.8（HQ 批次:B63）**：`isAllowedArticle()`（分類資料夾實際檔案、overview 精選、擋 ..）；`/api/ask` 同源＋只收 JSON。本機假 GitHub 實測全過。詳 archive／本檔分類表下 | ✅ |
