@@ -24,7 +24,7 @@
 /[category]/[file]   → 文章頁（渲染單份 Markdown 文件）
 /api/ask             → 開放圖書館 AI-query 層（RCF-143 工程 3，4-A）
                        POST：拉 tzlth-hq data/search-index.json（raw media type）
-                       → 記憶體計分（移植 knowledge-hook.py）→ gemini-flash-latest 帶引用生成
+                       → 記憶體計分（移植 knowledge-hook.py）→ gemini-3.5-flash-lite 帶引用生成（2026-11-25 起，25 秒上限；原 gemini-flash-latest 逾時）
                        GET ?health=1：唯讀索引計量（smoke test / 監控）
 /login、/api/auth/login、/api/auth/logout → 登入頁與登入／登出（公開；2026-11-25 起登入頁＋30 天通行證，舊 Basic 標頭仍放行）
 /api/version         → 部署自報（公開，不需登入的 API；回 commit 7 碼／node 大版本／region，2026-09-28）
