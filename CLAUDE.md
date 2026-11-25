@@ -44,12 +44,14 @@
 | `product` | `knowledge/product/` | 產品架構、定價、話術 |
 | `syntheses` | `knowledge/syntheses/` | 知識編譯（深度跨分析合成）|
 | `overview` | `knowledge/`（根層 allowlist）| 核心參考（client-patterns / freshness / architecture 等精選根檔）|
+| `projects` | `knowledge/projects/` | 專案登記：每個專案一個資料夾＋`overview` 總覽頁與該專案的規劃書（2026-11-25，HQ RCF-346；遞迴子目錄；不收進 /api/ask）|
+| `tool-evaluations` | `knowledge/tool-evaluations/` | 工具與方案評估記錄；README＝評估索引（顯示）；不收進 /api/ask |
 
 > ⛔ **文章網址白名單（2026-10-19 HQ 批次:B63，資安稽核 10-17 C-9）**：`lib/knowledge.ts` `isAllowedArticle()`——overview 只認 `ROOT_ALLOWLIST`；其他分類只認 `knowledge/<分類>/` 底下（**含子資料夾**）實際存在的 .md；含 `..`（含 `%2e%2e`、`%2F` 編碼）一律 404。原本 slug 直接拼進帶 token 的 GitHub contents API 路徑 ⇒ `/overview/<任意檔名>` 讀得到根層任何 .md、`..` 可跳出 knowledge/。
 > ⚠️ **不可改用側欄清單當白名單**：`cases/reports/` 22 份報告不在側欄，但 `/api/ask` 來源連結與 LINE Bot 開放圖書館都會指向它們。⚠️ 檔案清單抓不到（GitHub 失敗）→ 全部 404（Tim 裁：安全優先，fetch 5 分鐘快取）。
 > **`/api/ask` POST 跨站防護**：`lib/request-guard.ts`（同源＋只收 JSON；不帶 Origin 放行＝LINE Bot 伺服器端呼叫）。
 
-> ⚠️ 分類實為 **12 類**＝`lib/knowledge.ts` `CATEGORY_DEFS` 的鍵（**物件鍵順序＝首頁顯示順序**，2026-09-28 起首頁以 `Object.keys` 讀取；新增分類只加這一處）：overview / methodology / operations / automations / decisions / domains / references / analyses / syntheses / assessments / cases / product（domains/product 遞迴子目錄）。⛔ 2026-09-28 前首頁另有一份硬編 11 鍵陣列，09-03 加 assessments 漏改 ⇒ 該分類 25 天未上首頁；可見性規則全貌見 HQ `projects/SYS-08-knowledge-base.md` §C。
+> ⚠️ 分類實為 **14 類**＝`lib/knowledge.ts` `CATEGORY_DEFS` 的鍵（**物件鍵順序＝首頁顯示順序**，2026-09-28 起首頁以 `Object.keys` 讀取；新增分類只加這一處）：projects / overview / methodology / operations / automations / decisions / domains / references / analyses / syntheses / assessments / tool-evaluations / cases / product（domains/product/projects 遞迴子目錄；2026-11-25 加 projects、tool-evaluations，巢狀分類的中文資料夾名在 `buildDisplayName` 的 `folderLabels`，搜尋比對顯示名稱，沒加就搜不到中文）。⛔ 2026-09-28 前首頁另有一份硬編 11 鍵陣列，09-03 加 assessments 漏改 ⇒ 該分類 25 天未上首頁；可見性規則全貌見 HQ `projects/SYS-08-knowledge-base.md` §C。
 > **/api/ask 語料範圍 ≠ 本渲染分類**：AI-query 只檢索 **5 夾研究語料**（analyses / references / domains / syntheses / cases，RCF-143 C 館），刻意不含 methodology（→ NotebookLM A 館）/ product / operations / decisions。**2026-10-27 起 cases 只收洞察卡、不收 `cases/reports/` 報告書全文，洞察卡先遮罩 email／身分證／手機／統編**（HQ `build_search_index.py`；route `allowChunk()` 再擋一次，answer／search 兩模式都過；Tim 裁 D2 (乙)，HQ RCF-277）。網站頁面照常顯示 reports，只是不送 Gemini。
 
 ## 核心規則
@@ -86,6 +88,7 @@
 
 | 日期 | 修改內容 | 狀態 |
 |------|---------|------|
+| 2026-11-25 | 【KM/DEV】**加「專案」「工具評估」兩個分類＋中文資料夾名（HQ RCF-346）**：`lib/knowledge.ts` CATEGORY_DEFS 12→14（專案排首頁第一）、NESTED 加 projects、README_VISIBLE 加 tool-evaluations、folderLabels 加「一人公司」「讀書會」；/api/ask 白名單不動（這兩類不送 Gemini）；build 過。驗證 HQ `dev/deploy-verify/SYS-08-2026-11-25-projects.md` | ✅ |
 | 2026-11-25 | 【DEV/SEC】**登入頁＋30 天通行證＋Next 16.4.6（HQ tasks L74，RCF-343 補記）**：13fd551；proxy.ts＋lib/session.ts（簽章字串本站專用）＋/login；舊 Basic 保留給 LINE Bot；測試 7、本機 17 項過。網站問答 Gemini 逾時另立待辦。HQ dev/deploy-verify/SYS-08-2026-11-25-login.md | ✅ live（11-25 晚驗證通過）|
 | 2026-10-29 | 【SEC/DEV】**Next 16.3.8→16.4.3＋npm audit fix（HQ RCF-279，批次:B72）**：修 GHSA-2464／673q critical（Dependabot 漏報、npm audit 有報）；`153939c`，build、部署、未登入 401、本機 build 分類 12＝12 皆驗。HQ dev/deploy-verify/SYS-08-2026-10-29-next1643.md | ✅ |
 | 2026-10-27 | 【SEC/KM】**問答不再把諮詢報告書全文送 Gemini 免費層（HQ RCF-277，Tim 裁 D2 (乙)）**：route `allowChunk()` 只放五類、擋 `cases/reports/`（answer／search 兩模式）；本機以現行索引實測新版擋 147／147、舊版 0。索引端改在 HQ。詳 archive | ✅ |

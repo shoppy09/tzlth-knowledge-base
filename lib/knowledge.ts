@@ -27,6 +27,12 @@ export interface KnowledgeCategory {
 // WHY（2026-09-28）：原本首頁另有一份硬編 keys 陣列，09-03 加 assessments 只改了這裡、漏改那份 ⇒
 //   該分類 25 天沒上首頁、首頁搜尋也搜不到。新增分類＝只在這裡加一個鍵，不要再建第二份清單。
 export const CATEGORY_DEFS: Record<string, { label: string; icon: string; description: string }> = {
+  // 2026-11-25（HQ RCF-346）：專案登記排最前面——Tim 最常找的是「這件事現在到哪」。
+  projects: {
+    label: '專案',
+    icon: '🗂️',
+    description: '進行中的專案總覽（階段、下一步、等誰、文件在哪）與各專案的規劃書——每個專案一個資料夾，總覽頁叫 overview',
+  },
   overview: {
     label: '核心參考',
     icon: '📌',
@@ -76,6 +82,11 @@ export const CATEGORY_DEFS: Record<string, { label: string; icon: string; descri
     label: '評估與迭代',
     icon: '📈',
     description: '帶分數/基線、可跨期比較的評估快照與追蹤表 — CITE 40 網域權威基線＋GEO 週測/月檢趨勢；README 為跨家評估索引（RCF-169）',
+  },
+  'tool-evaluations': {
+    label: '工具評估',
+    icon: '🧪',
+    description: '工具與方案評估記錄（採不採用、理由、讀了什麼）——README 為評估索引',
   },
   cases: {
     label: '客戶案例',
@@ -199,6 +210,9 @@ function buildDisplayName(slug: string): string {
     'D4-competitor-dynamics': 'D4 競品動態',
     'D5-course-content-update': 'D5 課程內容事實',
     'D6-tool-setup': 'D6 AI 工具動態與應用',
+    // 2026-11-25（HQ RCF-346）：搜尋比對顯示名稱，沒有中文名就搜不到。每加一個專案資料夾在這裡加一筆。
+    'one-person-company': '一人公司',
+    'book-club': '讀書會',
   };
 
   const topFolder = folderLabels[parts[0]] || parts[0];
@@ -209,8 +223,8 @@ function buildDisplayName(slug: string): string {
 // 分類 → 檔案清單的唯一實作（首頁與分類頁共用）。
 // WHY（2026-09-28）：原本 getAllCategories 與 getCategoryFiles 各寫一份過濾規則，09-03 加
 //   assessments 的 README 例外只改了前者 ⇒ 分類頁與文章側欄看不到 README（跨家評估索引）。
-const NESTED = new Set(['product', 'domains']); // 含子目錄 .md，需 recursive fetch
-const README_VISIBLE = new Set(['domains', 'assessments']); // README 本身就是內容（領域導覽／跨家評估索引，RCF-169）
+const NESTED = new Set(['product', 'domains', 'projects']); // 含子目錄 .md，需 recursive fetch
+const README_VISIBLE = new Set(['domains', 'assessments', 'tool-evaluations']); // README 本身就是內容（領域導覽／跨家評估索引，RCF-169）
 
 async function listCategoryFiles(category: string): Promise<KnowledgeFile[]> {
   const nested = NESTED.has(category);
