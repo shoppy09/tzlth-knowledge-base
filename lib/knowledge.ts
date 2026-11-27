@@ -213,6 +213,7 @@ function buildDisplayName(slug: string): string {
     // 2026-11-25（HQ RCF-346）：搜尋比對顯示名稱，沒有中文名就搜不到。每加一個專案資料夾在這裡加一筆。
     'one-person-company': '一人公司',
     'book-club': '讀書會',
+    'institutional-sales': '機構業務',
   };
 
   const topFolder = folderLabels[parts[0]] || parts[0];
