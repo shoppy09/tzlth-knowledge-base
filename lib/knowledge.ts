@@ -214,6 +214,13 @@ function buildDisplayName(slug: string): string {
     'one-person-company': '一人公司',
     'book-club': '讀書會',
     'institutional-sales': '機構業務',
+    // 2026-11-28（HQ 專案登記補到 9 個）
+    'course-readiness': '課程上場準備',
+    'consulting-service': '個人顧問服務改善',
+    'ebooks': '電子書',
+    'social-ops': '社群經營檢討與試行',
+    'line-assistant': 'LINE Bot 助理',
+    'rules-and-ai': '規則制度與 AI 協作',
   };
 
   const topFolder = folderLabels[parts[0]] || parts[0];
